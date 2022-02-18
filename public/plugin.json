@@ -1,0 +1,16 @@
+{
+  "main": "index.html",
+  "logo": "logo.png",
+  "platform": ["win32", "darwin", "linux"],
+  "preload": "preload.js",
+  "development": {
+    "main": "http://localhost:8080"
+  },
+  "features": [
+    {
+      "code": "main",
+      "explain": "redis",
+      "cmds":["redis"]
+    }
+  ]
+}
