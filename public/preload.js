@@ -1,7 +1,11 @@
 const fs = require('fs');
 const p = require('path');
+const redis = require('redis');
 
 console.log("preload js loaded")
+
+let client = '';
+
 
 window.readMarkdownFile = function (path) {
   if (path.match(/\.md$/i)) {
@@ -30,3 +34,23 @@ window.writeMarkdownFile = function (path, content) {
 window.getFileDirectory = function (path) {
   return p.dirname(path);
 }
+
+
+
+
+window.connRedis = function (port, host, auth) {
+  client = redis.createClient({host: host, port: port});
+  if(auth !== '') {
+    client.auth_pass(auth);
+  }
+  return client;
+}
+
+window.getKey=function(key){
+  client.get(key, function(err, value) {
+    if (err) throw err;
+    console.log('Got: ' + value)
+    client.quit();
+  })
+  return 11111
+};

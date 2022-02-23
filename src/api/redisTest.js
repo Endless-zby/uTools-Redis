@@ -6,9 +6,53 @@ const client = redis.createClient({host:'172.16.192.211', port:6379});
 // 如果想要选择第3个而不是第0个(默认)的数据库，调用方式如下：
 // client.select(3, function() { /* ... */ });
 
-client.on("error", function (err) {
-  console.log("Error " + err);
+// 注册事件，注意 ready 事件在 connect 事件前面
+client.on("error", function(error){
+  console.log("Error " + error);
+  console.log("redis error");
 });
+
+client.on("ready", function(err){
+  if(err){
+    console.log("Error " + error);
+  }else{
+    console.log("redis ready");
+  }
+})
+
+client.on("connect", function(err){
+  if(err){
+    console.log("Error " + error);
+  }else{
+    console.log("redis connect");
+  }
+})
+
+client.on("reconnecting", function(err){
+  if(err){
+    console.log("Error " + error);
+  }else{
+    console.log("redis reconnecting");
+  }
+})
+
+client.on("end", function(err){
+  if(err){
+    console.log("Error " + error);
+  }else{
+    console.log("redis end");
+  }
+})
+
+client.on("warning", function(err){
+  if(err){
+    console.log("Error " + error);
+  }else{
+    console.log("redis warning");
+  }
+})
+
+
 
 client.set("string key", "string val", redis.print);
 client.hset("hash key", "hashtest 1", "some value", redis.print);
