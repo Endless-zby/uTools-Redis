@@ -50,6 +50,9 @@
 </div>
 </template>
 <script>
+
+
+
   export default {
     data() {
       const item = {
@@ -67,9 +70,12 @@
       addConnection: function () {
           // 在这添加一个redis链接
           console.log('添加一个redis链接')
+        this.creareRedis()
       }
-    }
+    },
+    mounted() {
 
+    }
   };
 </script>
 

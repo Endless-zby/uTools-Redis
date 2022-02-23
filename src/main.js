@@ -5,8 +5,10 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue'
 import axiosApi from '../src/api/axios.js'
+import redisApi from '../src/api/redis.js'
 Vue.use(axiosApi)
 Vue.use(ElementUI)
+Vue.use(redisApi)
 
 new Vue({
   el: '#app',
