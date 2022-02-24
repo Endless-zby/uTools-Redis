@@ -6,10 +6,11 @@ import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue'
 import axiosApi from '../src/api/axios.js'
 import redisApi from '../src/api/redis.js'
+import md5 from 'js-md5';
 Vue.use(axiosApi)
 Vue.use(ElementUI)
 Vue.use(redisApi)
-
+Vue.prototype.$md5 = md5;
 new Vue({
   el: '#app',
   render: h => h(App)
