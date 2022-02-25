@@ -7,6 +7,8 @@ import App from './App.vue'
 import axiosApi from '../src/api/axios.js'
 import redisApi from '../src/api/redis.js'
 import md5 from 'js-md5';
+import JsonViewer from 'vue-json-viewer'
+Vue.use(JsonViewer)
 Vue.use(axiosApi)
 Vue.use(ElementUI)
 Vue.use(redisApi)

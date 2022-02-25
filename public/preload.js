@@ -4,10 +4,31 @@ const redis = require('redis');
 
 console.log("preload js loaded")
 
+clientMap = new Map()
 let client = '';
 
-window.connRedis = function (port, host, auth) {
-  client = redis.createClient({host: host, port: port});
+let getClient = async(id) => {
+  const doc = await new Promise((resolve) => {
+    console.log(id)
+    const client = clientMap.get(id)
+    console.log(client)
+    if(client){
+      return resolve(client);
+    }else {
+      const config = utools.db.get('config/' + id).data
+      console.log(11111)
+      console.log(config)
+      const client = redis.createClient({host: config.host, port: config.port});
+      client.on("error", function(err){
+        console.log(err.toString())
+        return resolve(err.toString());
+      })
+      clientMap.set(id,client)
+      return resolve(client);
+    }
+  });
+  console.log(doc)
+  return doc;
 }
 
 let getText = async(key)=>{
@@ -21,15 +42,19 @@ let getText = async(key)=>{
   return JSON.parse(doc);
 };
 
-let getAllKeys = async()=>{
+let getAllKeys = async(id,key)=>{
   const doc = await new Promise((resolve) => {
-    client.keys('*', function (err, res) {
-      console.log('sss' + res)
-      return resolve(res);
-    });
+   getClient(id).then((client) => {
+     console.log('rrrrr' + client)
+     client.keys(key + '*', function (err, res) {
+       console.log('sss' + res)
+       return resolve(res);
+     });
+   }).catch((error) => {
+     console.log(error)
+   });
   });
-  console.log(doc)
-  return JSON.parse(doc);
+  return doc;
 };
 
 let isConnect = async(port, host, auth)=>{
@@ -37,13 +62,16 @@ let isConnect = async(port, host, auth)=>{
    const redisConnect = redis.createClient({host: host, port: port, auth: auth});
     redisConnect.on("connect", function(err){
       if(err){
+        redisConnect.quit();
         return resolve(err);
       }else{
+        redisConnect.quit();
         return resolve(1);
       }
     })
     redisConnect.on("error", function(err){
       console.log(err)
+      redisConnect.quit();
       return resolve(err);
     })
   });
@@ -56,11 +84,11 @@ window.isRedisConnect = async(port, host, auth) =>{
 };
 
 
-window.getKey = async(key) =>{
-  return await getText(key);
+window.getKey = async(id,key) =>{
+  return await getText(id,key);
 };
 
-window.getKeys = async() =>{
-  return await getAllKeys();
+window.getKeys = async(id,key) =>{
+  return await getAllKeys(id,key);
 };
 

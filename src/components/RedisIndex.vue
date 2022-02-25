@@ -6,24 +6,40 @@
       <el-aside width="220px" style="background-color: rgb(238, 241, 246)">
 
         <el-row>
-          <el-button type="success" size="mini" icon="el-icon-circle-plus-outline" @click="dialogFormVisible = true">
+          <el-button type="success" size="small" icon="el-icon-circle-plus-outline" @click="dialogFormVisible = true">
             新建连接
           </el-button>
-          <el-button type="primary" size="mini" icon="el-icon-refresh" @click="refresh">刷新列表</el-button>
+          <el-button type="primary" size="small" icon="el-icon-refresh" @click="refresh">刷新列表</el-button>
         </el-row>
-        <el-menu :default-openeds="['1', '3']" v-for="(client,index) in clientList" :key="index">
-          <el-submenu :index="String(index)">
-            <template slot="title">{{client.name}}</template>
-            <div class="demo-input-suffix">
-              <el-input
-                placeholder="输入key"
-                prefix-icon="el-icon-search"
-                v-model="input2">
-              </el-input>
-            </div>
+        <el-menu
+          default-active="2"
+          class="el-menu-vertical-demo"
+          @open="handleOpen"
+          :unique-opened=true>
+          <el-submenu :index="String(index)" v-for="(client,index) in clientList" :key="index">
+            <template slot="title">
+              <i class="el-icon-user-solid"></i>
+              <span>{{client.name}}</span>
+            </template>
+            <el-input
+              placeholder="搜索key.."
+              prefix-icon="el-icon-search"
+              v-model="input2"
+              size="small"
+              @input="selectKey">
+            </el-input>
+            <el-tag
+              v-for="(tag,elem) in keyMap.get(client.id)"
+              :key="elem"
+              closable
+              type="success">
+              {{tag}}
+            </el-tag>
           </el-submenu>
         </el-menu>
       </el-aside>
+
+
 
       <el-container>
         <el-header style="text-align: left; font-size: 12px">
@@ -35,16 +51,21 @@
               <el-dropdown-item>删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-          <span>Redis-Client</span>
+          <span>{{nowClient.name}}</span>
         </el-header>
 
-        <el-main>
-          <el-input
-            type="textarea"
-            :autosize="{ minRows: 5, maxRows: 10}"
-            placeholder="value...."
-            v-model="textarea2">
-          </el-input>
+        <el-main style="background-color: bisque">
+          <div>
+            <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
+          </div>
+
+
+<!--          <el-input-->
+<!--            type="textarea"-->
+<!--            :autosize="{ minRows: 5, maxRows: 10}"-->
+<!--            placeholder="value...."-->
+<!--            v-model="textarea2">-->
+<!--          </el-input>-->
         </el-main>
       </el-container>
 
@@ -62,12 +83,6 @@
           <el-form-item label="auth" :label-width="formLabelWidth">
             <el-input v-model="form.auth" autocomplete="off"></el-input>
           </el-form-item>
-          <!--        <el-form-item label="auth" :label-width="formLabelWidth">-->
-          <!--          <el-select v-model="form.auth" placeholder="请选择活动区域">-->
-          <!--            <el-option label="区域一" value="shanghai"></el-option>-->
-          <!--            <el-option label="区域二" value="beijing"></el-option>-->
-          <!--          </el-select>-->
-          <!--        </el-form-item>-->
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
@@ -79,8 +94,6 @@
   </div>
 </template>
 <script>
-  import md5 from 'js-md5';
-
   export default {
     data() {
       const item = {
@@ -90,7 +103,7 @@
       };
       return {
         tableData: Array(20).fill(item),
-        input2: 'byzhao',
+        input2: '',
         dialogFormVisible: false,
         form: {
           id: '',
@@ -99,9 +112,28 @@
           port: '',
           auth: ''
         },
-        textarea2: '',
+        keyMap: new Map,
+        textarea2: {
+          "traceId": "M6902171363576680152",
+          "message": {
+            "code": "0",
+            "message": "success"
+          },
+          "user": {
+            "idNoEndAt": "4075459200000",
+            "county": "",
+            "vipDueDate": "",
+            "idAddressCodeExists": "0",
+            "idNo": "H123321",
+            "orgType": "",
+            "province": "",
+            "operateCode": "2"
+          }
+        },
         clientList: [],
-        formLabelWidth: '80px'
+        formLabelWidth: '80px',
+        //当前client
+        nowClient: {},
       }
     },
 
@@ -114,13 +146,15 @@
           console.log('data : ' + data)
           this.$message.success('连接成功');
           // 连接成功后保存连接数据
-          const md5 = this.$md5(this.form.toString())
+          const md5 = this.$md5(JSON.stringify(this.form))
           this.form.id = md5;
+          console.log(this.form.id)
           const id = 'config/' + md5
           const isExist = this.uToolsDbGet(id)
-          if(isExist){
+          console.log(isExist)
+          if (isExist) {
             this.$message.info('已存在');
-          }else {
+          } else {
             this.uToolsDbPut(id, this.form)
             // 刷新左侧列表
             this.refresh()
@@ -156,8 +190,45 @@
       uToolsDbGetAllConfig: function () {
         // 传入字符串，则返回id以 config 开头的文档
         return utools.db.allDocs("config")
-      }
+      },
+      handleOpen: function (index) {
 
+        console.log('handleOpen');
+        console.log(index);
+       const now = this.clientList[index];
+        // 测试连接
+        isRedisConnect(now.port, now.host, now.auth).then((data) => {
+          // this.$message.success('连接成功');
+          // 连接redis查所有key
+          getKeys(now.id, '').then((data) => {
+            // 获取所有keys
+            // keys加到clientList中的对应对象中
+            this.keyMap.set(now.id, data)
+            this.nowClient = now;
+            this.refresh()
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }).catch((error) => {
+          this.$message.error(error);
+        })
+
+
+      },
+      selectKey: function (value) {
+        console.log(value);
+        getKeys(this.nowClient.id, value).then((data) => {
+          console.log(data);
+          if (data.length === 0) {
+            this.keyMap.delete(this.nowClient.id);
+          } else {
+            this.keyMap.set(this.nowClient.id, data);
+          }
+        }).catch((errer) => {
+          console.log(errer);
+        })
+      },
     },
     created() {
       // this.clientList = [{"name":"redis-211","host":"172.16.192.211","port":"6379","auth":"ssssss",},{"name":"redis-43","host":"172.16.192.211","port":"6379","auth":"ssssss"}]
