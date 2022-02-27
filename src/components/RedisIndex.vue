@@ -1,4 +1,4 @@
-<template>
+<template xmlns="http://www.w3.org/1999/html">
   <div class="decrease">
 
 
@@ -28,13 +28,21 @@
               size="small"
               @input="selectKey">
             </el-input>
-            <el-tag
-              v-for="(tag,elem) in keyMap.get(client.id)"
-              :key="elem"
-              closable
-              type="success">
-              {{tag}}
-            </el-tag>
+            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >
+
+              <p style="margin-top:1px; background-color: darkgray" >
+                {{tag}}
+              </p>
+            </div>
+
+
+<!--            <el-tag-->
+<!--              v-for="(tag,elem) in keyMap.get(client.id)"-->
+<!--              :key="elem"-->
+<!--              closable-->
+<!--              type="success">-->
+<!--              {{tag}}-->
+<!--            </el-tag>-->
           </el-submenu>
         </el-menu>
       </el-aside>
@@ -96,13 +104,7 @@
 <script>
   export default {
     data() {
-      const item = {
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      };
       return {
-        tableData: Array(20).fill(item),
         input2: '',
         dialogFormVisible: false,
         form: {
@@ -190,6 +192,15 @@
       uToolsDbGetAllConfig: function () {
         // 传入字符串，则返回id以 config 开头的文档
         return utools.db.allDocs("config")
+      },
+      uToolsDbDel: function (id) {
+        const result = utools.db.remove(id)
+        console.log(result)
+        if (result.ok) {
+          console.log("删除成功")
+          this.$message.success('已删除【' + result.data.b + '】');
+          this.refresh()
+        }
       },
       handleOpen: function (index) {
 
