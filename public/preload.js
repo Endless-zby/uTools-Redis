@@ -31,15 +31,49 @@ let getClient = async(id) => {
   return doc;
 }
 
-let getText = async(key)=>{
+let getText = async(id,key)=>{
   const doc = await new Promise((resolve) => {
-    client.get(key, function (err, res) {
-      console.log('sss' + res)
-      return resolve(res);
+    getClient(id).then((client) => {
+      client.get(key, function (err, res) {
+        console.log('value :  ' + res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
     });
   });
   console.log(doc)
-  return JSON.parse(doc);
+  return doc;
+};
+
+let getKeyLists = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.lrange(key,0,-1, function (err, res) {
+        console.log(typeof res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+let getkeyType = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.type(key, function (err, res) {
+        console.log('value :  ' + res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
 };
 
 let getAllKeys = async(id,key)=>{
@@ -86,6 +120,14 @@ window.isRedisConnect = async(port, host, auth) =>{
 
 window.getKey = async(id,key) =>{
   return await getText(id,key);
+};
+
+window.getKeyList = async(id,key) =>{
+  return await getKeyLists(id,key);
+};
+
+window.getkeyType = async(id,key) =>{
+  return await getkeyType(id,key);
 };
 
 window.getKeys = async(id,key) =>{

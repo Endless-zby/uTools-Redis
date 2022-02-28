@@ -52,12 +52,17 @@ client.on("warning", function(err){
   }
 })
 let list = []
-client.keys('zby', function (err, res) {
+client.hgetall('hash key', function (err, res) {
   console.log(res)
   list = res
   console.log(444444444444)
 });
-
+client.lrange('zbylist', 0 ,-1, function (err, res) {
+  console.log(res)
+  console.log(typeof res)
+  list = res
+  console.log(444444444444)
+});
 console.log(list)
 client.set("string key", "string val", redis.print);
 client.hset("hash key", "hashtest 1", "some value", redis.print);
@@ -69,3 +74,7 @@ client.hkeys("hash key", function (err, replies) {
   });
   client.quit();
 });
+
+var type = ''
+type = 'list'
+console.log('list' === type);

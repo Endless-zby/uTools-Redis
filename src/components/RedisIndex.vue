@@ -28,21 +28,22 @@
               size="small"
               @input="selectKey">
             </el-input>
-            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >
+<!--            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >-->
 
-              <p style="margin-top:1px; background-color: darkgray" >
-                {{tag}}
-              </p>
-            </div>
+<!--              <p style="margin-top:1px; background-color: darkgray" >-->
+<!--                {{tag}}-->
+<!--              </p>-->
+<!--            </div>-->
 
 
-<!--            <el-tag-->
-<!--              v-for="(tag,elem) in keyMap.get(client.id)"-->
-<!--              :key="elem"-->
-<!--              closable-->
-<!--              type="success">-->
-<!--              {{tag}}-->
-<!--            </el-tag>-->
+            <el-tag
+              v-for="(tag,elem) in keyMap.get(client.id)"
+              :key="elem"
+              closable
+              @click="getValue(tag)"
+              type="success">
+              {{tag}}
+            </el-tag>
           </el-submenu>
         </el-menu>
       </el-aside>
@@ -62,10 +63,41 @@
           <span>{{nowClient.name}}</span>
         </el-header>
 
-        <el-main style="background-color: bisque">
-          <div>
+        <el-main>
+          <div v-if="mainType === 'string'">
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
           </div>
+          <div v-else-if="mainType === 'list'">
+            <el-table
+              :data="tableData"
+              border
+              style="width: 100%">
+              <el-table-column
+                prop="index"
+                label="ID"
+                width="150">
+              </el-table-column>
+              <el-table-column
+                prop="value"
+                label="Value"
+                width="120">
+              </el-table-column>
+              <el-table-column
+                fixed="right"
+                label="Operation"
+                width="100">
+                <template slot-scope="scope">
+                  <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
+                  <el-button type="text" size="small">编辑</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+<!--          <div>-->
+<!--            <p>vue-json-editor</p>-->
+<!--            <vue-json-editor v-model="textarea2" :show-btns="true" :expandedOnStart="true" @json-change="onJsonChange"></vue-json-editor>-->
+<!--          </div>-->
 
 
 <!--          <el-input-->
@@ -115,30 +147,16 @@
           auth: ''
         },
         keyMap: new Map,
-        textarea2: {
-          "traceId": "M6902171363576680152",
-          "message": {
-            "code": "0",
-            "message": "success"
-          },
-          "user": {
-            "idNoEndAt": "4075459200000",
-            "county": "",
-            "vipDueDate": "",
-            "idAddressCodeExists": "0",
-            "idNo": "H123321",
-            "orgType": "",
-            "province": "",
-            "operateCode": "2"
-          }
-        },
+        textarea2: {},
         clientList: [],
         formLabelWidth: '80px',
         //当前client
         nowClient: {},
+        // main块中显示的value类型
+        mainType: 'string',
+        tableData: [],
       }
     },
-
     methods: {
       addNewClient: function () {
         // 关闭窗口
@@ -239,6 +257,41 @@
         }).catch((errer) => {
           console.log(errer);
         })
+      },
+      getValue: function (key) {
+
+        getkeyType(this.nowClient.id, key).then((type) => {
+          if ("string" === type) {
+            this.mainType = type
+            getKey(this.nowClient.id, key).then((data) => {
+              try {
+                this.textarea2= JSON.parse(data) // 如果不是json字符串就会抛异常
+              } catch(e) {
+                this.textarea2=data
+              }
+            }).catch((errer) => {
+              console.log(errer);
+            })
+          }else if("list" === type){
+            this.mainType = type
+            getKeyList(this.nowClient.id, key).then((data) => {
+              console.log(data);
+              this.tableData = data.map((item, index) => {
+                return {'index': index, 'value': item}
+              });
+              console.log(this.tableData);
+            }).catch((errer) => {
+              console.log(errer);
+            })
+          }else {
+            this.$message.error('暂不支持的value类型，后续会加');
+          }
+        }).catch((errer) => {
+          this.$message.error('获取【' + key + '】类型失败');
+        })
+      },
+      handleClick(row) {
+        console.log(row);
       },
     },
     created() {
