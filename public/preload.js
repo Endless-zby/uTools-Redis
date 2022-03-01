@@ -76,6 +76,63 @@ let getkeyType = async(id,key)=>{
   return doc;
 };
 
+let getkeyTTl = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.ttl(key, function (err, res) {
+        console.log('ttl :  ' + res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+let expire = async(id,key,seconds)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.expire(key, seconds);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+let setKeys = async(id,key,value,seconds)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.set(key, value);
+      if(seconds !== ''){
+        client.expire(key, seconds);
+      }
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+let del = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.del(key);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
 let getAllKeys = async(id,key)=>{
   const doc = await new Promise((resolve) => {
    getClient(id).then((client) => {
@@ -121,7 +178,9 @@ window.isRedisConnect = async(port, host, auth) =>{
 window.getKey = async(id,key) =>{
   return await getText(id,key);
 };
-
+window.getTTl = async(id,key) =>{
+  return await getkeyTTl(id,key);
+};
 window.getKeyList = async(id,key) =>{
   return await getKeyLists(id,key);
 };
@@ -134,3 +193,14 @@ window.getKeys = async(id,key) =>{
   return await getAllKeys(id,key);
 };
 
+window.updateTTl = async(id,key,seconds) =>{
+  return await expire(id,key,seconds);
+};
+
+window.delKey = async(id,key) =>{
+  return await del(id,key);
+};
+
+window.setKey = async(id,key,value,seconds) =>{
+  return await setKeys(id,key,value,seconds);
+};

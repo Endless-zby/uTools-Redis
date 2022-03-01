@@ -78,3 +78,23 @@ client.hkeys("hash key", function (err, replies) {
 var type = ''
 type = 'list'
 console.log('list' === type);
+
+
+client.set("rtrtrtrtrt", "555555555", redis.print);
+client.expire("rtrtrtrtrt", 2000);
+// -1, 如果key没有到期超时。
+// -2, 如果键不存在。
+client.ttl("rtrtrtrtrt",function (err, res) {
+  console.log(res)
+  list = res
+  console.log(6666666666666)
+})
+
+test()
+
+async function test() {
+  await client.set('something', '测试内容');
+
+  const data = await client.get('something');
+  console.log(data + 99)
+}

@@ -21,6 +21,13 @@
               <i class="el-icon-user-solid"></i>
               <span>{{client.name}}</span>
             </template>
+
+            <div>
+<!--              <el-button type="primary" size="mini" style="float: left;font-size: 12px;width: 45%" @click="addKey">刷新Key</el-button>-->
+              <el-button type="primary" size="mini" style="float: right;font-size: 12px;width: 100%" @click="dialogFormVisibleAddKey = true">新增Key
+              </el-button>
+            </div>
+            <br>
             <el-input
               placeholder="搜索key.."
               prefix-icon="el-icon-search"
@@ -28,12 +35,13 @@
               size="small"
               @input="selectKey">
             </el-input>
-<!--            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >-->
 
-<!--              <p style="margin-top:1px; background-color: darkgray" >-->
-<!--                {{tag}}-->
-<!--              </p>-->
-<!--            </div>-->
+            <!--            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >-->
+
+            <!--              <p style="margin-top:1px; background-color: darkgray" >-->
+            <!--                {{tag}}-->
+            <!--              </p>-->
+            <!--            </div>-->
 
 
             <el-tag
@@ -47,7 +55,6 @@
           </el-submenu>
         </el-menu>
       </el-aside>
-
 
 
       <el-container>
@@ -64,8 +71,24 @@
         </el-header>
 
         <el-main>
+          <div>
+            <el-input placeholder="key" v-model="key" size="small" style="width: 45%">
+              <template slot="prepend" style="width: 30px">{{mainType}}</template>
+              <el-button slot="append" icon="el-icon-check" style="width: 30px"></el-button>
+            </el-input>
+
+            <el-input placeholder="设置超时时间" v-model="ttl" size="small" style="width: 45% ; float: right">
+              <template slot="prepend" style="width: 30px">TTL</template>
+              <el-button slot="append" icon="el-icon-check" @click="updateTTl" style="width: 30px"></el-button>
+            </el-input>
+          </div>
+          <br><br>
+
+
           <div v-if="mainType === 'string'">
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
+            <br>
+            <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
           <div v-else-if="mainType === 'list'">
             <el-table
@@ -92,32 +115,21 @@
                 </template>
               </el-table-column>
             </el-table>
+            <br>
+            <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
-
-<!--          <div>-->
-<!--            <p>vue-json-editor</p>-->
-<!--            <vue-json-editor v-model="textarea2" :show-btns="true" :expandedOnStart="true" @json-change="onJsonChange"></vue-json-editor>-->
-<!--          </div>-->
-
-
-<!--          <el-input-->
-<!--            type="textarea"-->
-<!--            :autosize="{ minRows: 5, maxRows: 10}"-->
-<!--            placeholder="value...."-->
-<!--            v-model="textarea2">-->
-<!--          </el-input>-->
         </el-main>
       </el-container>
 
       <el-dialog title="创建新的redis连接" :visible.sync="dialogFormVisible">
         <el-form :model="form">
-          <el-form-item label="名称" :label-width="formLabelWidth">
+          <el-form-item label="名称" :label-width="formLabelWidth" :rules="[{ required: true, message: '名称不能为空'}]">
             <el-input v-model="form.name" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item label="ip" :label-width="formLabelWidth">
+          <el-form-item label="ip" :label-width="formLabelWidth" :rules="[{ required: true, message: 'IP不能为空'}]">
             <el-input v-model="form.host" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item label="端口" :label-width="formLabelWidth">
+          <el-form-item label="端口" :label-width="formLabelWidth" :rules="[{ required: true, message: '端口不能为空'}]">
             <el-input v-model="form.port" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item label="auth" :label-width="formLabelWidth">
@@ -129,6 +141,32 @@
           <el-button type="primary" @click="addNewClient">确 定</el-button>
         </div>
       </el-dialog>
+
+
+      <el-dialog title="增加key" :visible.sync="dialogFormVisibleAddKey">
+        <el-form :model="addKeyForm">
+          <el-form-item label="类型" :label-width="formLabelWidth" :rules="[{ required: true, message: '类型不能为空'}]">
+            <el-select v-model="addKeyForm.type" placeholder="请选择数据类型">
+              <el-option label="string" value="string"></el-option>
+              <el-option label="list" value="list"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="键名" :label-width="formLabelWidth" :rules="[{ required: true, message: 'key不能为空'}]">
+            <el-input v-model="addKeyForm.key" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="过期" placeholder="秒" :label-width="formLabelWidth">
+            <el-input v-model="addKeyForm.seconds"  autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="键值" :label-width="formLabelWidth">
+            <el-input v-model="addKeyForm.value" type="textarea" autocomplete="off"></el-input>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisibleAddKey = false">取 消</el-button>
+          <el-button type="primary" @click="addKey">确 定</el-button>
+        </div>
+      </el-dialog>
+
     </el-container>
 
   </div>
@@ -139,6 +177,13 @@
       return {
         input2: '',
         dialogFormVisible: false,
+        dialogFormVisibleAddKey: false,
+        addKeyForm: {
+          type: '',
+          key: '',
+          value: '',
+          seconds: -1,
+        },
         form: {
           id: '',
           name: '',
@@ -155,6 +200,10 @@
         // main块中显示的value类型
         mainType: 'string',
         tableData: [],
+        // 超时时间
+        ttl: -1,
+        // key
+        key: ''
       }
     },
     methods: {
@@ -186,6 +235,12 @@
         }).catch((error) => {
           this.$message.error(error);
         })
+      },
+      addKey: function () {
+        // 关闭窗口
+        this.dialogFormVisibleAddKey = true
+
+
       },
       refresh: function () {
         const config = this.uToolsDbGetAllConfig('config')
@@ -224,7 +279,7 @@
 
         console.log('handleOpen');
         console.log(index);
-       const now = this.clientList[index];
+        const now = this.clientList[index];
         // 测试连接
         isRedisConnect(now.port, now.host, now.auth).then((data) => {
           // this.$message.success('连接成功');
@@ -234,7 +289,6 @@
             // keys加到clientList中的对应对象中
             this.keyMap.set(now.id, data)
             this.nowClient = now;
-            this.refresh()
           }).catch((errer) => {
             console.log(errer);
             this.$message.error(errer);
@@ -259,20 +313,26 @@
         })
       },
       getValue: function (key) {
-
+        getTTl(this.nowClient.id, key).then((data) => {
+          this.ttl = data;
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.error(errer);
+        })
         getkeyType(this.nowClient.id, key).then((type) => {
+          this.key = key;
           if ("string" === type) {
             this.mainType = type
             getKey(this.nowClient.id, key).then((data) => {
               try {
-                this.textarea2= JSON.parse(data) // 如果不是json字符串就会抛异常
-              } catch(e) {
-                this.textarea2=data
+                this.textarea2 = JSON.parse(data) // 如果不是json字符串就会抛异常
+              } catch (e) {
+                this.textarea2 = data
               }
             }).catch((errer) => {
               console.log(errer);
             })
-          }else if("list" === type){
+          } else if ("list" === type) {
             this.mainType = type
             getKeyList(this.nowClient.id, key).then((data) => {
               console.log(data);
@@ -283,16 +343,65 @@
             }).catch((errer) => {
               console.log(errer);
             })
-          }else {
+          } else {
             this.$message.error('暂不支持的value类型，后续会加');
           }
         }).catch((errer) => {
-          this.$message.error('获取【' + key + '】类型失败');
+          this.$message.error('获取【' + key + '】类型失败' + errer);
         })
       },
       handleClick(row) {
         console.log(row);
       },
+      updateTTl: function () {
+        if (this.key === '') {
+          this.$message.info('请选择key');
+        } else {
+          updateTTl(this.nowClient.id, this.key, this.ttl).then((data) => {
+            this.$message.success('修改成功');
+
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }
+      },
+      deleteKey: function () {
+        if (this.key === '') {
+          this.$message.info('key为空');
+        } else {
+          delKey(this.nowClient.id, this.key).then((data) => {
+            this.$message.success('删除成功');
+            getKeys(this.nowClient.id, '').then((data) => {
+              // 获取所有keys
+              // keys加到clientList中的对应对象中
+              this.keyMap.set(this.nowClient.id, data)
+              this.key = ''
+              this.ttl = ''
+              this.textarea2 = ''
+            }).catch((errer) => {
+              console.log(errer);
+              this.$message.error(errer);
+            })
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }
+      },
+      setKey: function () {
+        if (this.key === '') {
+          this.$message.info('请选择key');
+        } else {
+          setKeys(this.nowClient.id).then((data) => {
+            this.$message.success('修改成功');
+
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }
+      }
     },
     created() {
       // this.clientList = [{"name":"redis-211","host":"172.16.192.211","port":"6379","auth":"ssssss",},{"name":"redis-43","host":"172.16.192.211","port":"6379","auth":"ssssss"}]
