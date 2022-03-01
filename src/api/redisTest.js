@@ -65,6 +65,13 @@ client.lrange('zbylist', 0 ,-1, function (err, res) {
 });
 console.log(list)
 client.set("string key", "string val", redis.print);
+client.set("string484848", '{\n' +
+  '    "dsdsd": {\n' +
+  '        "dsfdfd": "454545"\n' +
+  '    },\n' +
+  '    "ryrthtyjyj": "sdfsdfs"\n' +
+  '}');
+client.rpush("byzhaolist", [4545,'gfgfg',999999]);
 client.hset("hash key", "hashtest 1", "some value", redis.print);
 client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
 client.hkeys("hash key", function (err, replies) {
@@ -73,6 +80,17 @@ client.hkeys("hash key", function (err, replies) {
     console.log("    " + i + ": " + reply);
   });
   client.quit();
+});
+
+client.lrange('byzhaolist', 0 ,-1, function (err, res) {
+  console.log(res)
+  console.log(typeof res)
+  res.forEach(function (reply, i) {
+    console.log("    " + i + ": " + reply);
+  });
+  client.quit();
+  list = res
+  console.log(5555555)
 });
 
 var type = ''

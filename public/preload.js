@@ -5,7 +5,6 @@ const redis = require('redis');
 console.log("preload js loaded")
 
 clientMap = new Map()
-let client = '';
 
 let getClient = async(id) => {
   const doc = await new Promise((resolve) => {
@@ -103,10 +102,29 @@ let expire = async(id,key,seconds)=>{
   return doc;
 };
 
-let setKeys = async(id,key,value,seconds)=>{
+let setStringKeys = async(id,key,value,seconds)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
+      console.log(key + '---' + value)
       client.set(key, value);
+      console.log(33333333333)
+      if(seconds !== -1){
+        client.expire(key, seconds);
+      }
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+let setListKeys = async(id,key,value,seconds)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.rpush(key, value);
       if(seconds !== ''){
         client.expire(key, seconds);
       }
@@ -118,6 +136,7 @@ let setKeys = async(id,key,value,seconds)=>{
   console.log(doc)
   return doc;
 };
+
 
 
 let del = async(id,key)=>{
@@ -201,6 +220,10 @@ window.delKey = async(id,key) =>{
   return await del(id,key);
 };
 
-window.setKey = async(id,key,value,seconds) =>{
-  return await setKeys(id,key,value,seconds);
+window.setStringKey = async(id,key,value,seconds) =>{
+  return await setStringKeys(id,key,value,seconds);
+};
+
+window.setListKey = async(id,key,value,seconds) =>{
+  return await setListKeys(id,key,value,seconds);
 };

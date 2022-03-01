@@ -23,8 +23,9 @@
             </template>
 
             <div>
-<!--              <el-button type="primary" size="mini" style="float: left;font-size: 12px;width: 45%" @click="addKey">刷新Key</el-button>-->
-              <el-button type="primary" size="mini" style="float: right;font-size: 12px;width: 100%" @click="dialogFormVisibleAddKey = true">新增Key
+              <!--              <el-button type="primary" size="mini" style="float: left;font-size: 12px;width: 45%" @click="addKey">刷新Key</el-button>-->
+              <el-button type="primary" size="mini" style="float: right;font-size: 12px;width: 100%"
+                         @click="dialogFormVisibleAddKey = true">新增Key
               </el-button>
             </div>
             <br>
@@ -43,15 +44,15 @@
             <!--              </p>-->
             <!--            </div>-->
 
-
-            <el-tag
-              v-for="(tag,elem) in keyMap.get(client.id)"
-              :key="elem"
-              closable
-              @click="getValue(tag)"
-              type="success">
-              {{tag}}
-            </el-tag>
+            <input v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" type="button" :value="tag" style="width: 100%;height: 25px;" @click="getValue(tag)">
+<!--            <el-tag-->
+<!--              v-for="(tag,elem) in keyMap.get(client.id)"-->
+<!--              :key="elem"-->
+<!--              closable-->
+<!--              @click="getValue(tag)"-->
+<!--              type="success">-->
+<!--              {{tag}}-->
+<!--            </el-tag>-->
           </el-submenu>
         </el-menu>
       </el-aside>
@@ -155,10 +156,10 @@
             <el-input v-model="addKeyForm.key" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item label="过期" placeholder="秒" :label-width="formLabelWidth">
-            <el-input v-model="addKeyForm.seconds"  autocomplete="off"></el-input>
+            <el-input v-model="addKeyForm.seconds" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item label="键值" :label-width="formLabelWidth">
-            <el-input v-model="addKeyForm.value" type="textarea" autocomplete="off"></el-input>
+            <el-input v-model="addKeyForm.stringValue" type="textarea" autocomplete="off"></el-input>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -181,7 +182,7 @@
         addKeyForm: {
           type: '',
           key: '',
-          value: '',
+          stringValue: '',
           seconds: -1,
         },
         form: {
@@ -238,8 +239,29 @@
       },
       addKey: function () {
         // 关闭窗口
-        this.dialogFormVisibleAddKey = true
-
+        this.dialogFormVisibleAddKey = false
+        if ("string" === this.addKeyForm.type) {
+          console.log(4444444);
+          console.log(this.addKeyForm);
+          setStringKey(this.nowClient.id, this.addKeyForm.key, this.addKeyForm.stringValue, this.addKeyForm.seconds).then((data) => {
+            console.log(data);
+            this.$message.success('添加成功');
+            this.refreshKeysList()
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.success(errer);
+          })
+        } else if ("list" === this.addKeyForm.type) {
+          setListKey(this.nowClient.id, this.addKeyForm.key, this.addKeyForm.value, this.addKeyForm.seconds).then((data) => {
+            console.log(data);
+            this.$message.success('添加成功');
+            this.refreshKeysList()
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.success(errer);
+          })
+        }
+        this.refresh()
 
       },
       refresh: function () {
@@ -287,6 +309,7 @@
           getKeys(now.id, '').then((data) => {
             // 获取所有keys
             // keys加到clientList中的对应对象中
+            this.keyMap.delete(now.id)
             this.keyMap.set(now.id, data)
             this.nowClient = now;
           }).catch((errer) => {
@@ -372,35 +395,22 @@
         } else {
           delKey(this.nowClient.id, this.key).then((data) => {
             this.$message.success('删除成功');
-            getKeys(this.nowClient.id, '').then((data) => {
-              // 获取所有keys
-              // keys加到clientList中的对应对象中
-              this.keyMap.set(this.nowClient.id, data)
-              this.key = ''
-              this.ttl = ''
-              this.textarea2 = ''
-            }).catch((errer) => {
-              console.log(errer);
-              this.$message.error(errer);
-            })
+            this.refreshKeysList()
           }).catch((errer) => {
             console.log(errer);
             this.$message.error(errer);
           })
         }
       },
-      setKey: function () {
-        if (this.key === '') {
-          this.$message.info('请选择key');
-        } else {
-          setKeys(this.nowClient.id).then((data) => {
-            this.$message.success('修改成功');
-
-          }).catch((errer) => {
-            console.log(errer);
-            this.$message.error(errer);
-          })
-        }
+      refreshKeysList: function () {
+        getKeys(this.nowClient.id, '').then((data) => {
+          this.keyMap.delete(this.nowClient.id)
+          this.keyMap.set(this.nowClient.id, data);
+          this.refresh()
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.error(errer);
+        })
       }
     },
     created() {
