@@ -336,7 +336,7 @@
         })
       },
       getValue: function (key) {
-        getTTl(this.nowClient.id, key).then((data) => {
+        getKeyTTl(this.nowClient.id, key).then((data) => {
           this.ttl = data;
         }).catch((errer) => {
           console.log(errer);

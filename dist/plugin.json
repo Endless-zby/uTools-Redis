@@ -1,0 +1,16 @@
+{
+  "main": "index.html",
+  "logo": "logo.png",
+  "platform": ["win32", "darwin", "linux"],
+  "preload": "preload.js",
+  "development": {
+    "main": "index.html"
+  },
+  "features": [
+    {
+      "code": "main",
+      "explain": "redis",
+      "cmds":["redis"]
+    }
+  ]
+}
