@@ -37,22 +37,8 @@
               @input="selectKey">
             </el-input>
 
-            <!--            <div v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" >-->
-
-            <!--              <p style="margin-top:1px; background-color: darkgray" >-->
-            <!--                {{tag}}-->
-            <!--              </p>-->
-            <!--            </div>-->
-
             <input v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" type="button" :value="tag" style="width: 100%;height: 25px;" @click="getValue(tag)">
-<!--            <el-tag-->
-<!--              v-for="(tag,elem) in keyMap.get(client.id)"-->
-<!--              :key="elem"-->
-<!--              closable-->
-<!--              @click="getValue(tag)"-->
-<!--              type="success">-->
-<!--              {{tag}}-->
-<!--            </el-tag>-->
+
           </el-submenu>
         </el-menu>
       </el-aside>
@@ -63,9 +49,9 @@
           <el-dropdown>
             <el-button type="primary" icon="el-icon-s-tools" size="mini" plain></el-button>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>查看</el-dropdown-item>
-              <el-dropdown-item>新增</el-dropdown-item>
-              <el-dropdown-item>删除</el-dropdown-item>
+              <el-dropdown-item @click.native="updateConnection">修改</el-dropdown-item>
+              <el-dropdown-item @click.native="dialogFormVisible = true">新增</el-dropdown-item>
+              <el-dropdown-item @click.native="deleteConnection">删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
           <span>{{nowClient.name}}</span>
@@ -99,12 +85,12 @@
               <el-table-column
                 prop="index"
                 label="ID"
-                width="150">
+                width="130">
               </el-table-column>
               <el-table-column
                 prop="value"
                 label="Value"
-                width="120">
+                width="300">
               </el-table-column>
               <el-table-column
                 fixed="right"
@@ -252,7 +238,11 @@
             this.$message.success(errer);
           })
         } else if ("list" === this.addKeyForm.type) {
-          setListKey(this.nowClient.id, this.addKeyForm.key, this.addKeyForm.value, this.addKeyForm.seconds).then((data) => {
+          console.log('set了一个list');
+          console.log(this.addKeyForm.stringValue);
+          console.log('---------------');
+          setListKey(this.nowClient.id, this.addKeyForm.key, this.addKeyForm.stringValue, this.addKeyForm.seconds).then((data) => {
+            console.log('+++++++++++');
             console.log(data);
             this.$message.success('添加成功');
             this.refreshKeysList()
@@ -287,15 +277,6 @@
       uToolsDbGetAllConfig: function () {
         // 传入字符串，则返回id以 config 开头的文档
         return utools.db.allDocs("config")
-      },
-      uToolsDbDel: function (id) {
-        const result = utools.db.remove(id)
-        console.log(result)
-        if (result.ok) {
-          console.log("删除成功")
-          this.$message.success('已删除【' + result.data.b + '】');
-          this.refresh()
-        }
       },
       handleOpen: function (index) {
 
@@ -412,6 +393,21 @@
           this.$message.error(errer);
         })
       }
+    },
+    // 删除连接
+    deleteConnection: function (){
+      const result =  utools.db.remove('config/' + this.nowClient.id)
+      // 刷新列表
+      console.log(result)
+      if (result.ok) {
+        console.log("删除成功")
+        this.$message.success('已删除【' + this.nowClient.name + '】');
+        this.refresh()
+      }
+    },
+    // 修改连接
+    updateConnection: function (){
+
     },
     created() {
       // this.clientList = [{"name":"redis-211","host":"172.16.192.211","port":"6379","auth":"ssssss",},{"name":"redis-43","host":"172.16.192.211","port":"6379","auth":"ssssss"}]

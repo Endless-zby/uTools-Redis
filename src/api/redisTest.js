@@ -72,6 +72,7 @@ client.set("string484848", '{\n' +
   '    "ryrthtyjyj": "sdfsdfs"\n' +
   '}');
 client.rpush("byzhaolist", [4545,'gfgfg',999999]);
+client.rpush("byzhaolist", 66666);
 client.hset("hash key", "hashtest 1", "some value", redis.print);
 client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
 client.hkeys("hash key", function (err, replies) {

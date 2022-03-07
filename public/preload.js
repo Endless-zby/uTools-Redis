@@ -125,7 +125,7 @@ let setListKeys = async(id,key,value,seconds)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
       client.rpush(key, value);
-      if(seconds !== ''){
+      if(seconds !== -1){
         client.expire(key, seconds);
       }
       return resolve(true);
