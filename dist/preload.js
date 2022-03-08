@@ -18,6 +18,11 @@ let getClient = async(id) => {
       console.log(11111)
       console.log(config)
       const client = redis.createClient({host: config.host, port: config.port});
+      if(config.auth !== ''){
+        // 密码
+        console.log("需要密码")
+        client.auth(config.auth)
+      }
       client.on("error", function(err){
         console.log(err.toString())
         return resolve(err.toString());
@@ -125,7 +130,7 @@ let setListKeys = async(id,key,value,seconds)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
       client.rpush(key, value);
-      if(seconds !== ''){
+      if(seconds !== -1){
         client.expire(key, seconds);
       }
       return resolve(true);
