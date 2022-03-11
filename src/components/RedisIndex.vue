@@ -158,9 +158,9 @@
               </el-card>
             </div>
           </div>
-
+          <br>
           <div v-if="mainType === 'string'">
-            <br>
+
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
             <br>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
