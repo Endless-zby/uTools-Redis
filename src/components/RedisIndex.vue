@@ -38,7 +38,8 @@
               @input="selectKey">
             </el-input>
 
-            <input v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" type="button" :value="tag" style="width: 100%;height: 25px;" @click="getValue(tag)">
+            <input v-for="(tag,elem) in keyMap.get(client.id)" :key="elem" type="button" :value="tag"
+                   style="width: 100%;height: 25px;" @click="getValue(tag)">
 
           </el-submenu>
         </el-menu>
@@ -72,7 +73,7 @@
           </div>
 
 
-<!--          主页-->
+          <!--          主页-->
           <div v-if="mainType === 'index'">
             <div>
               <el-card class="box-card" shadow="always" style="float: left">
@@ -89,7 +90,6 @@
               <el-card class="box-card" shadow="always" style="float: right">
                 <div slot="header" class="clearfix">
                   <span class="el-icon-s-operation">状态</span>
-                  <!--                <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>-->
                 </div>
                 <div class="text item">
                   <input class="input-index" type="button" disabled=true :value="'客户端连接数:' + redisInfo.connected_clients">
@@ -99,6 +99,7 @@
               </el-card>
             </div>
             <br>
+            <div>
               <el-card class="box-card-db" shadow="always">
                 <div slot="header" class="clearfix">
                   <span class="el-icon-s-data">键值统计</span>
@@ -107,7 +108,7 @@
                 <el-table
                   :data="redisDbList"
                   style="width: 100%"
-                  :default-sort = "{prop: 'date', order: 'descending'}"
+                  :default-sort="{prop: 'date', order: 'descending'}"
                 >
                   <el-table-column
                     prop="dbName"
@@ -131,6 +132,8 @@
                   </el-table-column>
                 </el-table>
               </el-card>
+            </div>
+            <br>
             <div>
               <el-card class="box-card-db" shadow="always">
                 <div slot="header" class="clearfix">
@@ -139,7 +142,7 @@
                 <el-table
                   :data="redisInfoList"
                   style="width: 100%"
-                  :default-sort = "{prop: 'date', order: 'descending'}"
+                  :default-sort="{prop: 'date', order: 'descending'}"
                 >
                   <el-table-column
                     prop="name"
@@ -157,18 +160,19 @@
           </div>
 
           <div v-if="mainType === 'string'">
+            <br>
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
             <br>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
-          <div v-else-if="mainType === 'list'">
+          <div v-else-if="mainType === 'list' || mainType === 'hash'">
             <el-table
               :data="tableData"
               border
               style="width: 100%">
               <el-table-column
                 prop="index"
-                label="ID">
+                :label="mainType === 'list' ? 'ID' : 'Key'">
               </el-table-column>
               <el-table-column
                 prop="value"
@@ -178,11 +182,13 @@
                 <template slot-scope="scope">
                   <el-button
                     size="mini"
-                    @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+                    @click="handleEdit(scope.$index, scope.row)">编辑
+                  </el-button>
                   <el-button
                     size="mini"
                     type="danger"
-                    @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                    @click="handleDelete(scope.$index, scope.row)">删除
+                  </el-button>
                 </template>
               </el-table-column>
 
@@ -395,18 +401,18 @@
 
 
       },
-      refreshIndexInfo: function(data){
+      refreshIndexInfo: function (data) {
         // 刷新页面中的redis连接信息
         console.log(data);
         this.redisInfo = data;
         const map = new Map(Object.entries(data));
         let list = [];
         let dblist = [];
-        for (let[k,v] of map){
-          if(k.startsWith('db')){
-            dblist.push({"dbName":k,"keys":v.keys,"expires":v.expires,"ttl":v.avg_ttl})
-          }else {
-            list.push({"name":k,"value":v})
+        for (let [k, v] of map) {
+          if (k.startsWith('db')) {
+            dblist.push({"dbName": k, "keys": v.keys, "expires": v.expires, "ttl": v.avg_ttl})
+          } else {
+            list.push({"name": k, "value": v})
           }
         }
         console.log(map);
@@ -450,7 +456,7 @@
             }).catch((errer) => {
               console.log(errer);
             })
-          } else if ("list" === type || "hash" === type) {
+          } else if ("list" === type) {
             this.mainType = type
             getKeyList(this.nowClient.id, key).then((data) => {
               console.log(data);
@@ -461,7 +467,22 @@
             }).catch((errer) => {
               console.log(errer);
             })
-          }else {
+          } else if ("hash" === type) {
+            this.mainType = type
+            getHashKey(this.nowClient.id, key).then((data) => {
+              console.log(data);
+              const map = new Map(Object.entries(data));
+              let list = [];
+              for (let [k, v] of map) {
+                list.push({"index": k, "value": v})
+              }
+              this.tableData = list;
+              console.log(this.tableData);
+            }).catch((errer) => {
+              console.log(errer);
+            })
+          }
+          else {
             this.$message.error('暂不支持的value类型，后续会加');
           }
         }).catch((errer) => {
@@ -509,8 +530,8 @@
       }
     },
     // 删除连接
-    deleteConnection: function (){
-      const result =  utools.db.remove('config/' + this.nowClient.id)
+    deleteConnection: function () {
+      const result = utools.db.remove('config/' + this.nowClient.id)
       // 刷新列表
       console.log(result)
       if (result.ok) {
@@ -520,10 +541,11 @@
       }
     },
     // 修改连接
-    updateConnection: function (){
+    updateConnection: function () {
 
     },
     created() {
+      // this.refresh()
       // this.clientList = [{"name":"redis-211","host":"172.16.192.211","port":"6379","auth":"ssssss",},{"name":"redis-43","host":"172.16.192.211","port":"6379","auth":"ssssss"}]
       // this.clientList = this.uToolsDbGet("connConfig").data
       // console.log('初始化列表 ： '  + this.clientList)
@@ -537,7 +559,8 @@
     color: #333;
     line-height: 60px;
   }
-  .input-index{
+
+  .input-index {
     width: 100%;
     height: 32px;
     font-size: 13px;
@@ -546,6 +569,7 @@
   .el-aside {
     color: #333;
   }
+
   .text {
     font-size: 14px;
   }
@@ -559,6 +583,7 @@
     display: table;
     content: "";
   }
+
   .clearfix:after {
     clear: both
   }
@@ -566,6 +591,7 @@
   .box-card {
     width: 48%;
   }
+
   .box-card-db {
     width: 100%;
   }
