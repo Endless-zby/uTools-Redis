@@ -17,6 +17,7 @@ client.on("ready", function(err){
     console.log("Error " + error);
   }else{
     console.log("redis ready");
+    console.log(client.server_info)
   }
 })
 
@@ -25,6 +26,7 @@ client.on("connect", function(err){
     console.log("Error " + error);
   }else{
     console.log("redis connect");
+    console.log(client.server_info)
   }
 })
 
@@ -51,69 +53,74 @@ client.on("warning", function(err){
     console.log("redis warning");
   }
 })
-let list = []
-client.hgetall('hash key', function (err, res) {
-  console.log(res)
-  list = res
-  console.log(444444444444)
-});
-client.lrange('zbylist', 0 ,-1, function (err, res) {
-  console.log(res)
-  console.log(typeof res)
-  list = res
-  console.log(444444444444)
-});
-console.log(list)
-client.set("string key", "string val", redis.print);
-client.set("string484848", '{\n' +
-  '    "dsdsd": {\n' +
-  '        "dsfdfd": "454545"\n' +
-  '    },\n' +
-  '    "ryrthtyjyj": "sdfsdfs"\n' +
-  '}');
-client.rpush("byzhaolist", [4545,'gfgfg',999999]);
-client.rpush("byzhaolist", 66666);
-client.hset("hash key", "hashtest 1", "some value", redis.print);
-client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
-client.hkeys("hash key", function (err, replies) {
-  console.log(replies.length + " replies:");
-  replies.forEach(function (reply, i) {
-    console.log("    " + i + ": " + reply);
-  });
-  client.quit();
-});
-
-client.lrange('byzhaolist', 0 ,-1, function (err, res) {
-  console.log(res)
-  console.log(typeof res)
-  res.forEach(function (reply, i) {
-    console.log("    " + i + ": " + reply);
-  });
-  client.quit();
-  list = res
-  console.log(5555555)
-});
-
-var type = ''
-type = 'list'
-console.log('list' === type);
 
 
-client.set("rtrtrtrtrt", "555555555", redis.print);
-client.expire("rtrtrtrtrt", 2000);
-// -1, 如果key没有到期超时。
-// -2, 如果键不存在。
-client.ttl("rtrtrtrtrt",function (err, res) {
-  console.log(res)
-  list = res
-  console.log(6666666666666)
-})
 
-test()
 
-async function test() {
-  await client.set('something', '测试内容');
 
-  const data = await client.get('something');
-  console.log(data + 99)
-}
+
+// let list = []
+// client.hgetall('hash key', function (err, res) {
+//   console.log(res)
+//   console.log(555555555555)
+//   list = res
+//   // console.log(JSON.parse(res))
+//
+//   console.log(444444444444)
+// });
+// client.lrange('zbylist', 0 ,-1, function (err, res) {
+//   console.log(res)
+//   console.log(typeof res)
+//   list = res
+//   console.log(444444444444)
+// });
+// console.log(list)
+// client.set("string key", "string val", redis.print);
+// client.set("string484848", '{\n' +
+//   '    "dsdsd": {\n' +
+//   '        "dsfdfd": "454545"\n' +
+//   '    },\n' +
+//   '    "ryrthtyjyj": "sdfsdfs"\n' +
+//   '}');
+// client.rpush("byzhaolist", [4545,'gfgfg',999999]);
+// client.rpush("byzhaolist", 66666);
+// client.hset("hash key", "hashtest 1", "some value", redis.print);
+// client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
+// client.hkeys("hash key", function (err, replies) {
+//   console.log(replies.length + " replies:");
+//   replies.forEach(function (reply, i) {
+//     console.log("    " + i + ": " + reply);
+//   });
+//   client.quit();
+// });
+//
+// client.lrange('byzhaolist', 0 ,-1, function (err, res) {
+//   console.log(res)
+//   console.log(typeof res)
+//   res.forEach(function (reply, i) {
+//     console.log("    " + i + ": " + reply);
+//   });
+//   client.quit();
+//   list = res
+//   console.log(5555555)
+// });
+//
+// var type = ''
+// type = 'list'
+// console.log('list' === type);
+//
+// console.log('-----------------------')
+// console.log(client.server_info);
+// console.log('-----------------------')
+// client.set("rtrtrtrtrt", "555555555", redis.print);
+// client.expire("rtrtrtrtrt", 2000);
+// // -1, 如果key没有到期超时。
+// // -2, 如果键不存在。
+// client.ttl("rtrtrtrtrt",function (err, res) {
+//   console.log(res)
+//   list = res
+//   console.log(6666666666666)
+// })
+
+
+

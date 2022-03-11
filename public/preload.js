@@ -65,6 +65,21 @@ let getKeyLists = async(id,key)=>{
   return doc;
 };
 
+let getHashKeys = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.hgetall(key, function (err, res) {
+        console.log(typeof res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
 let getkeyType = async(id,key)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
@@ -175,23 +190,25 @@ let getAllKeys = async(id,key)=>{
 let isConnect = async(port, host, auth)=>{
   const doc = await new Promise((resolve) => {
    const redisConnect = redis.createClient({host: host, port: port, auth: auth});
-    redisConnect.on("connect", function(err){
+    if(auth !== ''){
+      // 密码
+      console.log("需要密码")
+      redisConnect.auth(auth)
+    }
+    redisConnect.on("ready", function(err){
       if(err){
         redisConnect.quit();
-        return resolve(err);
+        return resolve({"status":"-1","error":err});
       }else{
+        console.log(redisConnect.server_info)
+        console.log("redis ready");
         redisConnect.quit();
-        return resolve(1);
+        return resolve(redisConnect.server_info);
       }
-    })
-    redisConnect.on("error", function(err){
-      console.log(err)
-      redisConnect.quit();
-      return resolve(err);
     })
   });
   console.log(doc)
-  return JSON.parse(doc);
+  return doc;
 };
 
 window.isRedisConnect = async(port, host, auth) =>{
@@ -231,4 +248,8 @@ window.setStringKey = async(id,key,value,seconds) =>{
 
 window.setListKey = async(id,key,value,seconds) =>{
   return await setListKeys(id,key,value,seconds);
+};
+
+window.getHashKey = async(id,key) =>{
+  return await getHashKeys(id,key);
 };

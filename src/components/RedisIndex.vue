@@ -2,7 +2,7 @@
   <div class="decrease">
 
 
-    <el-container style="height: 500px; border: 1px solid #eee">
+    <el-container style="height: 600px; border: 1px solid #eee">
       <el-aside width="220px" style="background-color: rgb(238, 241, 246)">
 
         <el-row>
@@ -15,6 +15,7 @@
           default-active="2"
           class="el-menu-vertical-demo"
           @open="handleOpen"
+          @close="handleClose"
           :unique-opened=true>
           <el-submenu :index="String(index)" v-for="(client,index) in clientList" :key="index">
             <template slot="title">
@@ -58,7 +59,7 @@
         </el-header>
 
         <el-main>
-          <div>
+          <div v-if="mainType !== 'index'">
             <el-input placeholder="key" v-model="key" size="small" style="width: 45%">
               <template slot="prepend" style="width: 30px">{{mainType}}</template>
               <el-button slot="append" icon="el-icon-check" style="width: 30px"></el-button>
@@ -69,8 +70,91 @@
               <el-button slot="append" icon="el-icon-check" @click="updateTTl" style="width: 30px"></el-button>
             </el-input>
           </div>
-          <br><br>
 
+
+<!--          主页-->
+          <div v-if="mainType === 'index'">
+            <div>
+              <el-card class="box-card" shadow="always" style="float: left">
+                <div slot="header" class="clearfix">
+                  <span class="el-icon-info">服务器</span>
+                  <!--                <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>-->
+                </div>
+                <div class="text item">
+                  <input class="input-index" type="button" disabled=true :value="'Redis版本:' + redisInfo.redis_version">
+                  <input class="input-index" type="button" disabled=true :value="`OS:` + redisInfo.os">
+                  <input class="input-index" type="button" disabled=true :value="`进程ID:` + redisInfo.process_id">
+                </div>
+              </el-card>
+              <el-card class="box-card" shadow="always" style="float: right">
+                <div slot="header" class="clearfix">
+                  <span class="el-icon-s-operation">状态</span>
+                  <!--                <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>-->
+                </div>
+                <div class="text item">
+                  <input class="input-index" type="button" disabled=true :value="'客户端连接数:' + redisInfo.connected_clients">
+                  <input class="input-index" type="button" disabled=true :value="`历史连接数:` + redisInfo.total_connections_received">
+                  <input class="input-index" type="button" disabled=true :value="`历史命令数:` + redisInfo.total_commands_processed">
+                </div>
+              </el-card>
+            </div>
+            <br>
+              <el-card class="box-card-db" shadow="always">
+                <div slot="header" class="clearfix">
+                  <span class="el-icon-s-data">键值统计</span>
+                  <!--                <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>-->
+                </div>
+                <el-table
+                  :data="redisDbList"
+                  style="width: 100%"
+                  :default-sort = "{prop: 'date', order: 'descending'}"
+                >
+                  <el-table-column
+                    prop="dbName"
+                    label="DB"
+                    sortable>
+                  </el-table-column>
+                  <el-table-column
+                    prop="keys"
+                    label="Keys"
+                    sortable>
+                  </el-table-column>
+                  <el-table-column
+                    prop="expires"
+                    label="Expires"
+                    sortable>
+                  </el-table-column>
+                  <el-table-column
+                    prop="ttl"
+                    label="Avg TTL"
+                    sortable>
+                  </el-table-column>
+                </el-table>
+              </el-card>
+            <div>
+              <el-card class="box-card-db" shadow="always">
+                <div slot="header" class="clearfix">
+                  <span class="el-icon-s-home">Redis信息全集</span>
+                </div>
+                <el-table
+                  :data="redisInfoList"
+                  style="width: 100%"
+                  :default-sort = "{prop: 'date', order: 'descending'}"
+                >
+                  <el-table-column
+                    prop="name"
+                    label="Key"
+                    sortable>
+                  </el-table-column>
+                  <el-table-column
+                    prop="value"
+                    label="Value"
+                    sortable>
+                  </el-table-column>
+                </el-table>
+              </el-card>
+            </div>
+          </div>
 
           <div v-if="mainType === 'string'">
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
@@ -84,23 +168,24 @@
               style="width: 100%">
               <el-table-column
                 prop="index"
-                label="ID"
-                width="130">
+                label="ID">
               </el-table-column>
               <el-table-column
                 prop="value"
-                label="Value"
-                width="300">
+                label="Value">
               </el-table-column>
-              <el-table-column
-                fixed="right"
-                label="Operation"
-                width="100">
+              <el-table-column label="操作">
                 <template slot-scope="scope">
-                  <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
-                  <el-button type="text" size="small">编辑</el-button>
+                  <el-button
+                    size="mini"
+                    @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+                  <el-button
+                    size="mini"
+                    type="danger"
+                    @click="handleDelete(scope.$index, scope.row)">删除</el-button>
                 </template>
               </el-table-column>
+
             </el-table>
             <br>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
@@ -178,6 +263,9 @@
           port: '',
           auth: ''
         },
+        redisInfo: {},
+        redisInfoList: [],
+        redisDbList: [],
         keyMap: new Map,
         textarea2: {},
         clientList: [],
@@ -185,7 +273,7 @@
         //当前client
         nowClient: {},
         // main块中显示的value类型
-        mainType: 'string',
+        mainType: 'index',
         tableData: [],
         // 超时时间
         ttl: -1,
@@ -200,6 +288,7 @@
         // 测试连接
         isRedisConnect(this.form.port, this.form.host, this.form.auth).then((data) => {
           console.log('data : ' + data)
+          this.refreshIndexInfo(data)
           this.$message.success('连接成功');
           // 连接成功后保存连接数据
           const md5 = this.$md5(JSON.stringify(this.form))
@@ -282,9 +371,12 @@
 
         console.log('handleOpen');
         console.log(index);
+        this.mainType = 'index'
         const now = this.clientList[index];
         // 测试连接
         isRedisConnect(now.port, now.host, now.auth).then((data) => {
+          console.log('这是连接信息');
+          this.refreshIndexInfo(data)
           // this.$message.success('连接成功');
           // 连接redis查所有key
           getKeys(now.id, '').then((data) => {
@@ -302,6 +394,28 @@
         })
 
 
+      },
+      refreshIndexInfo: function(data){
+        // 刷新页面中的redis连接信息
+        console.log(data);
+        this.redisInfo = data;
+        const map = new Map(Object.entries(data));
+        let list = [];
+        let dblist = [];
+        for (let[k,v] of map){
+          if(k.startsWith('db')){
+            dblist.push({"dbName":k,"keys":v.keys,"expires":v.expires,"ttl":v.avg_ttl})
+          }else {
+            list.push({"name":k,"value":v})
+          }
+        }
+        console.log(map);
+        console.log(typeof map);
+        this.redisInfoList = list;
+        this.redisDbList = dblist;
+      },
+      handleClose: function (index) {
+        this.mainType = 'index'
       },
       selectKey: function (value) {
         console.log(value);
@@ -336,7 +450,7 @@
             }).catch((errer) => {
               console.log(errer);
             })
-          } else if ("list" === type) {
+          } else if ("list" === type || "hash" === type) {
             this.mainType = type
             getKeyList(this.nowClient.id, key).then((data) => {
               console.log(data);
@@ -347,7 +461,7 @@
             }).catch((errer) => {
               console.log(errer);
             })
-          } else {
+          }else {
             this.$message.error('暂不支持的value类型，后续会加');
           }
         }).catch((errer) => {
@@ -423,8 +537,36 @@
     color: #333;
     line-height: 60px;
   }
+  .input-index{
+    width: 100%;
+    height: 32px;
+    font-size: 13px;
+  }
 
   .el-aside {
     color: #333;
+  }
+  .text {
+    font-size: 14px;
+  }
+
+  .item {
+    margin-bottom: 18px;
+  }
+
+  .clearfix:before,
+  .clearfix:after {
+    display: table;
+    content: "";
+  }
+  .clearfix:after {
+    clear: both
+  }
+
+  .box-card {
+    width: 48%;
+  }
+  .box-card-db {
+    width: 100%;
   }
 </style>
