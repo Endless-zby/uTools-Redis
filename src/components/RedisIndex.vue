@@ -63,7 +63,7 @@
           <div v-if="mainType !== 'index'">
             <el-input placeholder="key" v-model="key" size="small" style="width: 45%">
               <template slot="prepend" style="width: 30px">{{mainType}}</template>
-              <el-button slot="append" icon="el-icon-check" style="width: 30px"></el-button>
+              <el-button slot="append" icon="el-icon-check" @click="updateKeyIndex" style="width: 30px"></el-button>
             </el-input>
 
             <el-input placeholder="设置超时时间" v-model="ttl" size="small" style="width: 45% ; float: right">
@@ -163,11 +163,12 @@
 
             <json-viewer :value="textarea2" :expand-depth=4 copyable boxed sort></json-viewer>
             <br>
+            <el-button type="primary" icon="el-icon-edit" @click="dialogFormVisibleUpdateValue = true"></el-button>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
           <div v-else-if="mainType === 'list' || mainType === 'hash'">
             <el-table
-              :data="tableData"
+              :data="tableData.filter(data => !search || data.value.toLowerCase().includes(search.toLowerCase()) || data.index.toLowerCase().includes(search.toLowerCase()))"
               border
               style="width: 100%">
               <el-table-column
@@ -178,7 +179,13 @@
                 prop="value"
                 label="Value">
               </el-table-column>
-              <el-table-column label="操作">
+              <el-table-column align="right">
+                <template slot="header" slot-scope="scope">
+                  <el-input
+                    v-model="search"
+                    size="mini"
+                    placeholder="输入关键字搜索"/>
+                </template>
                 <template slot-scope="scope">
                   <el-button
                     size="mini"
@@ -194,6 +201,8 @@
 
             </el-table>
             <br>
+            <el-button v-if="mainType === 'list'" type="primary" icon="el-icon-plus" @click="addListKeyValueFunction" style="float: left"></el-button>
+            <el-button v-if="mainType === 'hash'" type="primary" icon="el-icon-plus" @click="addHashKeyValue = true" style="float: left"></el-button>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
         </el-main>
@@ -245,6 +254,36 @@
         </div>
       </el-dialog>
 
+
+
+      <el-dialog title="编辑新的Value..." :visible.sync="dialogFormVisibleUpdateValue">
+        <el-form>
+          <el-form-item :label-width="formLabelWidth">
+            <el-input type="textarea" :rows="4" placeholder="value..." v-model="newTextarea2" autocomplete="off"></el-input>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisibleUpdateValue = false">取 消</el-button>
+          <el-button type="primary" @click="updateValue">确 定</el-button>
+        </div>
+      </el-dialog>
+
+      <el-dialog title="编辑新的Value..." :visible.sync="addHashKeyValue">
+        <el-form>
+          <el-form-item :label-width="formLabelWidth">
+            <el-input placeholder="field" v-model="hashField" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item :label-width="formLabelWidth">
+            <el-input type="textarea" :rows="4" placeholder="value" v-model="hashValue" autocomplete="off"></el-input>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="addHashKeyValue = false">取 消</el-button>
+          <el-button type="primary" @click="addHashKeyValueFunction">确 定</el-button>
+        </div>
+      </el-dialog>
+
+
     </el-container>
 
   </div>
@@ -256,6 +295,8 @@
         input2: '',
         dialogFormVisible: false,
         dialogFormVisibleAddKey: false,
+        dialogFormVisibleUpdateValue: false,
+        addHashKeyValue: false,
         addKeyForm: {
           type: '',
           key: '',
@@ -274,6 +315,7 @@
         redisDbList: [],
         keyMap: new Map,
         textarea2: {},
+        newTextarea2: '',
         clientList: [],
         formLabelWidth: '80px',
         //当前client
@@ -281,10 +323,18 @@
         // main块中显示的value类型
         mainType: 'index',
         tableData: [],
+        // 添加hash时候的field
+        hashField: '',
+        // 添加hash时候的value
+        hashValue: '',
+        // list或者hash列表搜索
+        search: '',
         // 超时时间
         ttl: -1,
         // key
-        key: ''
+        key: '',
+        // oldKey  更新key时候用
+        oldKey: ''
       }
     },
     methods: {
@@ -436,6 +486,72 @@
           console.log(errer);
         })
       },
+      handleEdit: function (index,row) {
+        console.log(index);
+        console.log(row);
+        this.$prompt('请输入新的Value', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputValidator: true,
+        }).then(({ value }) => {
+          if(this.mainType === 'list'){
+            updateListValue(this.nowClient.id, this.key, index, value).then((data) => {
+              this.$message.success('修改成功');
+            }).catch((errer) => {
+              console.log(errer);
+              this.$message.error(errer);
+            })
+          }else if(this.mainType === 'hash'){
+            updateHashValue(this.nowClient.id, this.key, row.index, value).then((data) => {
+              this.$message.success('修改成功');
+            }).catch((errer) => {
+              console.log(errer);
+              this.$message.error(errer);
+            })
+          }
+          this.getValue(this.key)
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消输入'
+          });
+        });
+      },
+      addListKeyValueFunction: function () {
+        this.$prompt('添加新行', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputValidator: true,
+        }).then(({ value }) => {
+          setListKey(this.nowClient.id, this.key, value, -1).then((data) => {
+            this.$message.success('添加成功');
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.success(errer);
+          })
+          this.getValue(this.key)
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消输入'
+          });
+        });
+      },
+      addHashKeyValueFunction: function (){
+        updateHashValue(this.nowClient.id, this.key, this.hashField, this.hashValue).then((data) => {
+          this.addHashKeyValue = false
+          this.$message.success('添加成功');
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.error(errer);
+        })
+        this.getValue(this.key)
+      },
+      handleDelete: function (index,row) {
+        console.log(index);
+        console.log(row);
+
+      },
       getValue: function (key) {
         getKeyTTl(this.nowClient.id, key).then((data) => {
           this.ttl = data;
@@ -445,6 +561,7 @@
         })
         getkeyType(this.nowClient.id, key).then((type) => {
           this.key = key;
+          this.oldKey = key;
           if ("string" === type) {
             this.mainType = type
             getKey(this.nowClient.id, key).then((data) => {
@@ -489,9 +606,6 @@
           this.$message.error('获取【' + key + '】类型失败' + errer);
         })
       },
-      handleClick(row) {
-        console.log(row);
-      },
       updateTTl: function () {
         if (this.key === '') {
           this.$message.info('请选择key');
@@ -505,6 +619,32 @@
           })
         }
       },
+      updateValue: function () {
+        setStringKey(this.nowClient.id, this.key, this.newTextarea2, -1).then((data) => {
+          console.log(data);
+          this.dialogFormVisibleUpdateValue = false;
+          this.$message.success('修改成功');
+          this.refreshKeysList()
+          this.newTextarea2 = ''
+          this.getValue(this.key)
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.success(errer);
+        })
+      },
+      updateKeyIndex: function () {
+        if (this.key === '') {
+          this.$message.info('key为空');
+        } else {
+          updateKey(this.nowClient.id, this.oldKey,this.key).then((data) => {
+            this.$message.success('修改成功');
+            this.refreshKeysList()
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }
+      },
       deleteKey: function () {
         if (this.key === '') {
           this.$message.info('key为空');
@@ -512,6 +652,7 @@
           delKey(this.nowClient.id, this.key).then((data) => {
             this.$message.success('删除成功');
             this.refreshKeysList()
+            this.mainType = 'index'
           }).catch((errer) => {
             console.log(errer);
             this.$message.error(errer);

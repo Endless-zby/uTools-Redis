@@ -2,7 +2,7 @@ const redis = require("redis");
 // const client = redis.createClient();
 // 不使用默认连接方式时，使用如下方式创建客户端：
 const client = redis.createClient({host:'127.0.0.1', port:6379});
-client.auth('zby123456')
+// client.auth('zby123456')
 // 如果想要选择第3个而不是第0个(默认)的数据库，调用方式如下：
 // client.select(3, function() { /* ... */ });
 
@@ -14,19 +14,19 @@ client.on("error", function(error){
 
 client.on("ready", function(err){
   if(err){
-    console.log("Error " + error);
+    console.log("Error " + err);
   }else{
     console.log("redis ready");
-    console.log(client.server_info)
+    // console.log(client.server_info)
   }
 })
 
 client.on("connect", function(err){
   if(err){
-    console.log("Error " + error);
+    console.log("Error " + err);
   }else{
     console.log("redis connect");
-    console.log(client.server_info)
+    // console.log(client.server_info)
   }
 })
 
@@ -40,7 +40,7 @@ client.on("reconnecting", function(err){
 
 client.on("end", function(err){
   if(err){
-    console.log("Error " + error);
+    console.log("Error " + err);
   }else{
     console.log("redis end");
   }
@@ -48,13 +48,11 @@ client.on("end", function(err){
 
 client.on("warning", function(err){
   if(err){
-    console.log("Error " + error);
+    console.log("Error " + err);
   }else{
     console.log("redis warning");
   }
 })
-
-
 
 
 
@@ -68,12 +66,25 @@ client.on("warning", function(err){
 //
 //   console.log(444444444444)
 // });
-// client.lrange('zbylist', 0 ,-1, function (err, res) {
+
+
+
+
+// client.lrange('lists', 0 ,-1, function (err, res) {
 //   console.log(res)
-//   console.log(typeof res)
-//   list = res
 //   console.log(444444444444)
 // });
+//
+// client.lset('lists', 1 ,'hhhhhhhhhhh')
+//
+// client.lrange('lists', 0 ,-1, function (err, res) {
+//   console.log(res)
+//   console.log(444444444444)
+// });
+
+
+
+
 // console.log(list)
 // client.set("string key", "string val", redis.print);
 // client.set("string484848", '{\n' +
@@ -82,7 +93,7 @@ client.on("warning", function(err){
 //   '    },\n' +
 //   '    "ryrthtyjyj": "sdfsdfs"\n' +
 //   '}');
-// client.rpush("byzhaolist", [4545,'gfgfg',999999]);
+client.rpush("byzhaolist", [4545,'gfgfg',999999]);
 // client.rpush("byzhaolist", 66666);
 // client.hset("hash key", "hashtest 1", "some value", redis.print);
 // client.hset(["hash key", "hashtest 2", "some other value"], redis.print);
