@@ -1,14 +1,15 @@
 const redis = require("redis");
 // const client = redis.createClient();
 // 不使用默认连接方式时，使用如下方式创建客户端：
-const client = redis.createClient({host:'127.0.0.1', port:6379});
+const client = redis.createClient({host:'192.168.0.105', port:6379});
 // client.auth('zby123456')
 // 如果想要选择第3个而不是第0个(默认)的数据库，调用方式如下：
 // client.select(3, function() { /* ... */ });
 
 // 注册事件，注意 ready 事件在 connect 事件前面
 client.on("error", function(error){
-  console.log("Error " + error);
+  // console.log("Error :" + error.toString());
+  console.log(error);
   console.log("redis error");
 });
 
@@ -32,7 +33,7 @@ client.on("connect", function(err){
 
 client.on("reconnecting", function(err){
   if(err){
-    console.log("Error " + error);
+    console.log("Error " + err);
   }else{
     console.log("redis reconnecting");
   }
@@ -93,7 +94,7 @@ client.on("warning", function(err){
 //   '    },\n' +
 //   '    "ryrthtyjyj": "sdfsdfs"\n' +
 //   '}');
-client.rpush("byzhaolist", [4545,'gfgfg',999999]);
+// client.rpush("byzhaolist", [4545,'gfgfg',999999]);
 // client.rpush("byzhaolist", 66666);
 // client.hset("hash key", "hashtest 1", "some value", redis.print);
 // client.hset(["hash key", "hashtest 2", "some other value"], redis.print);

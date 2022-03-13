@@ -21,6 +21,13 @@
             <template slot="title">
               <i class="el-icon-user-solid"></i>
               <span>{{client.name}}</span>
+              <el-dropdown style="float: right">
+                <i class="el-icon-setting"  style="margin-right: 15px; font-size: 15px"></i>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item @click.native="lookConnection(index)">查看</el-dropdown-item>
+                  <el-dropdown-item @click.native="deleteConnection(index)">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
             </template>
 
             <div>
@@ -48,15 +55,7 @@
 
       <el-container>
         <el-header style="text-align: left; font-size: 12px">
-          <el-dropdown>
-            <el-button type="primary" icon="el-icon-s-tools" size="mini" plain></el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item @click.native="updateConnection">修改</el-dropdown-item>
-              <el-dropdown-item @click.native="dialogFormVisible = true">新增</el-dropdown-item>
-              <el-dropdown-item @click.native="deleteConnection">删除</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-          <span>{{nowClient.name}}</span>
+          <span style="font-size: 20px">{{nowClient.name}}</span>
         </el-header>
 
         <el-main>
@@ -93,8 +92,8 @@
                 </div>
                 <div class="text item">
                   <input class="input-index" type="button" disabled=true :value="'客户端连接数:' + redisInfo.connected_clients">
-                  <input class="input-index" type="button" disabled=true :value="`历史连接数:` + redisInfo.total_connections_received">
-                  <input class="input-index" type="button" disabled=true :value="`历史命令数:` + redisInfo.total_commands_processed">
+                  <input class="input-index" type="button" disabled=true :value="`已使用内存:` + redisInfo.used_memory_human">
+                  <input class="input-index" type="button" disabled=true :value="`内存消耗峰值:` + redisInfo.used_memory_peak_human">
                 </div>
               </el-card>
             </div>
@@ -283,6 +282,20 @@
         </div>
       </el-dialog>
 
+      <el-dialog :visible.sync="showClientInfo">
+
+        <el-descriptions title="连接信息">
+          <el-descriptions-item label="名称">{{form.name}}</el-descriptions-item>
+          <el-descriptions-item label="ip">{{form.host}}</el-descriptions-item>
+          <el-descriptions-item label="端口">{{form.port}}</el-descriptions-item>
+          <el-descriptions-item label="auth">{{form.auth}}</el-descriptions-item>
+        </el-descriptions>
+
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="closeClientInfo">确 定</el-button>
+        </div>
+      </el-dialog>
+
 
     </el-container>
 
@@ -297,6 +310,7 @@
         dialogFormVisibleAddKey: false,
         dialogFormVisibleUpdateValue: false,
         addHashKeyValue: false,
+        showClientInfo: false,
         addKeyForm: {
           type: '',
           key: '',
@@ -668,22 +682,31 @@
           console.log(errer);
           this.$message.error(errer);
         })
+      },
+      // 删除连接
+      deleteConnection: function (index) {
+        console.log(index);
+        console.log(this.clientList[index]);
+        const clientInfo = this.clientList[index]
+        const result = utools.db.remove('config/' + clientInfo.id)
+        // 刷新列表
+        console.log(result)
+        if (result.ok) {
+          console.log("删除成功")
+          this.$message.success('已删除【' + clientInfo.name + '】');
+          this.refresh()
+        }
+      },
+      lookConnection: function (index) {
+        console.log(index);
+        console.log(this.clientList[index]);
+        this.form = this.clientList[index]
+        this.showClientInfo = true
+      },
+      closeClientInfo: function (){
+        this.showClientInfo = false
+        this.form = {}
       }
-    },
-    // 删除连接
-    deleteConnection: function () {
-      const result = utools.db.remove('config/' + this.nowClient.id)
-      // 刷新列表
-      console.log(result)
-      if (result.ok) {
-        console.log("删除成功")
-        this.$message.success('已删除【' + this.nowClient.name + '】');
-        this.refresh()
-      }
-    },
-    // 修改连接
-    updateConnection: function () {
-
     },
     created() {
       // this.refresh()

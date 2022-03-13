@@ -234,8 +234,18 @@ let isConnect = async(port, host, auth)=>{
       console.log("需要密码")
       redisConnect.auth(auth)
     }
+    redisConnect.on("connect", function(err){
+      if(err){
+        console.log("Error " + err);
+      }else{
+        console.log("redis connect");
+        // console.log(client.server_info)
+      }
+    })
+
     redisConnect.on("ready", function(err){
       if(err){
+        console.log("redis error");
         redisConnect.quit();
         return resolve({"status":"-1","error":err});
       }else{
