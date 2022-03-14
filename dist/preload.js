@@ -158,11 +158,50 @@ let setListKeys = async(id,key,value,seconds)=>{
 };
 
 
+let updateListValues = async(id,key,index,value)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.lset(key, index ,value)
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+let updateHashValues = async(id,key,field,value)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.hset(key, field ,value)
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
 
 let del = async(id,key)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
       client.del(key);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+let updateKeys = async(id,oldKey,newKey)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.rename(oldKey,newKey);
       return resolve(true);
     }).catch((error) => {
       console.log(error)
@@ -195,8 +234,18 @@ let isConnect = async(port, host, auth)=>{
       console.log("需要密码")
       redisConnect.auth(auth)
     }
+    redisConnect.on("connect", function(err){
+      if(err){
+        console.log("Error " + err);
+      }else{
+        console.log("redis connect");
+        // console.log(client.server_info)
+      }
+    })
+
     redisConnect.on("ready", function(err){
       if(err){
+        console.log("redis error");
         redisConnect.quit();
         return resolve({"status":"-1","error":err});
       }else{
@@ -253,3 +302,17 @@ window.setListKey = async(id,key,value,seconds) =>{
 window.getHashKey = async(id,key) =>{
   return await getHashKeys(id,key);
 };
+
+
+window.updateKey = async(id,oldKey,newKey) =>{
+  return await updateKeys(id,oldKey,newKey);
+};
+
+window.updateListValue = async(id,key,index,value) =>{
+  return await updateListValues(id,key,index,value);
+};
+
+window.updateHashValue = async(id,key,field,value) =>{
+  return await updateHashValues(id,key,field,value);
+};
+
