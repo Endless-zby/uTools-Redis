@@ -251,6 +251,7 @@ let getDbs = async(id)=>{
 let isConnect = async(port, host, auth)=>{
   const doc = await new Promise((resolve) => {
    const redisConnect = redis.createClient({host: host, port: port, auth: auth});
+    console.log(redisConnect)
     if(auth !== ''){
       // 密码
       console.log("需要密码")
@@ -269,14 +270,21 @@ let isConnect = async(port, host, auth)=>{
       if(err){
         console.log("redis error");
         redisConnect.quit();
-        return resolve({"status":"-1","error":err});
       }else{
         console.log(redisConnect.server_info)
         console.log("redis ready");
         redisConnect.quit();
-        return resolve(redisConnect.server_info);
+        return resolve({"code":"0","message":"success","data":redisConnect.server_info});
       }
     })
+
+    redisConnect.on("error", function(error){
+      if(error){
+        redisConnect.quit();
+        return resolve({"code":"-1","message":error,"data":{}});
+      }
+      console.log("redis error");
+    });
   });
   console.log(doc)
   return doc;

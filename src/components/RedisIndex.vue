@@ -15,7 +15,7 @@
           @open="handleOpen"
           @close="handleClose"
           :unique-opened=true>
-          <el-submenu :index="String(index)" v-for="(client,index) in clientList" :key="index">
+          <el-submenu :index="String(index)" v-for="(client,index) in clientList" :key="index" >
             <template slot="title">
               <i class="el-icon-user-solid"></i>
               <span>{{ client.name }}</span>
@@ -476,28 +476,33 @@ export default {
       // 测试连接
       isRedisConnect(now.port, now.host, now.auth).then((data) => {
         console.log('这是连接信息');
-        this.refreshIndexInfo(data)
-        // this.$message.success('连接成功');
-        // 查看当前所在库
-        getDb(now.id)
-          .then((data) => {
-            console.log('当前所在库：' + data);
-            this.selectDb =  data === undefined ? 0 : data
+        if(data.code === '-1'){
+          this.$message.error(data.message.message);
+        }else {
+          this.refreshIndexInfo(data.data)
+          // this.$message.success('连接成功');
+          // 查看当前所在库
+          getDb(now.id)
+            .then((data) => {
+              console.log('当前所在库：' + data);
+              this.selectDb =  data === undefined ? 0 : data
+            }).catch((errer) => {
+            console.log(errer);
+            this.$message.error(errer);
+          })
+          // 连接redis查所有key
+          getKeys(now.id, '').then((data) => {
+            // 获取所有keys
+            // keys加到clientList中的对应对象中
+            this.keyMap.delete(now.id)
+            this.keyMap.set(now.id, data)
+            this.nowClient = now;
           }).catch((errer) => {
-          console.log(errer);
-          this.$message.error(errer);
-        })
-        // 连接redis查所有key
-        getKeys(now.id, '').then((data) => {
-          // 获取所有keys
-          // keys加到clientList中的对应对象中
-          this.keyMap.delete(now.id)
-          this.keyMap.set(now.id, data)
-          this.nowClient = now;
-        }).catch((errer) => {
-          console.log(errer);
-          this.$message.error(errer);
-        })
+            console.log(errer);
+            this.$message.error(errer);
+          })
+        }
+
       }).catch((error) => {
         this.$message.error(error);
       })

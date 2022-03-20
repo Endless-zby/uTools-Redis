@@ -184,20 +184,6 @@ let updateHashValues = async(id,key,field,value)=>{
   return doc;
 };
 
-
-let del = async(id,key)=>{
-  const doc = await new Promise((resolve) => {
-    getClient(id).then((client) => {
-      client.del(key);
-      return resolve(true);
-    }).catch((error) => {
-      console.log(error)
-    });
-  });
-  console.log(doc)
-  return doc;
-};
-
 let updateKeys = async(id,oldKey,newKey)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
@@ -217,7 +203,8 @@ let getAllKeys = async(id,key)=>{
      console.log('rrrrr' + client)
      client.keys(key + '*', function (err, res) {
        console.log('sss' + res)
-       return resolve(res);
+       console.log('sssssss' + res.sort())
+       return resolve(res.sort((a,b) => {a.localeCompare(b)}));
      });
    }).catch((error) => {
      console.log(error)
@@ -226,9 +213,45 @@ let getAllKeys = async(id,key)=>{
   return doc;
 };
 
+
+let selectDbs = async(id,db)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.select(db,function (err) {
+        if(err){
+          console.log("redis select db error : " + err);
+          resolve(false);
+        }else{
+          console.log("redis now db is " + db);
+          resolve(true);
+        }
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  return doc;
+};
+
+
+let getDbs = async(id)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      console.log(client)
+      console.log("ssssss当前所在库：" + client.selected_db);
+      resolve(client.selected_db)
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  return doc;
+};
+
+
 let isConnect = async(port, host, auth)=>{
   const doc = await new Promise((resolve) => {
    const redisConnect = redis.createClient({host: host, port: port, auth: auth});
+    console.log(redisConnect)
     if(auth !== ''){
       // 密码
       console.log("需要密码")
@@ -247,72 +270,207 @@ let isConnect = async(port, host, auth)=>{
       if(err){
         console.log("redis error");
         redisConnect.quit();
-        return resolve({"status":"-1","error":err});
       }else{
         console.log(redisConnect.server_info)
         console.log("redis ready");
         redisConnect.quit();
-        return resolve(redisConnect.server_info);
+        return resolve({"code":"0","message":"success","data":redisConnect.server_info});
       }
     })
+
+    redisConnect.on("error", function(error){
+      if(error){
+        redisConnect.quit();
+        return resolve({"code":"-1","message":error,"data":{}});
+      }
+      console.log("redis error");
+    });
   });
   console.log(doc)
   return doc;
 };
 
+
+
+
+
+
+
+
+
+
+/**
+ * 验证连接
+ * @param port
+ * @param host
+ * @param auth
+ * @returns {Promise<unknown>}
+ */
 window.isRedisConnect = async(port, host, auth) =>{
   return await isConnect(port, host, auth);
 };
 
-
+/**
+ * 获取string value
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getKey = async(id,key) =>{
   return await getText(id,key);
 };
+
+
+/**
+ * 获取key超时时间
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getKeyTTl = async(id,key) =>{
   return await getkeyTTls(id,key);
 };
+
+
+/**
+ * 获取list value
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getKeyList = async(id,key) =>{
   return await getKeyLists(id,key);
 };
 
+/**
+ * 获取key type
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getkeyType = async(id,key) =>{
   return await getkeyType(id,key);
 };
 
+/**
+ * 获取string value
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getKeys = async(id,key) =>{
   return await getAllKeys(id,key);
 };
 
+/**
+ * 修改key超时时间
+ * @param id
+ * @param key
+ * @param seconds
+ * @returns {Promise<unknown>}
+ */
 window.updateTTl = async(id,key,seconds) =>{
   return await expire(id,key,seconds);
 };
 
+/**
+ * 删除 key
+ * @param id
+ * @param key
+ * @returns {Promise<*>}
+ */
 window.delKey = async(id,key) =>{
   return await del(id,key);
 };
 
+/**
+ * 增加string kv
+ * @param id
+ * @param key
+ * @param value
+ * @param seconds
+ * @returns {Promise<unknown>}
+ */
 window.setStringKey = async(id,key,value,seconds) =>{
   return await setStringKeys(id,key,value,seconds);
 };
 
+/**
+ * 增加list队列
+ * @param id
+ * @param key
+ * @param value
+ * @param seconds
+ * @returns {Promise<unknown>}
+ */
 window.setListKey = async(id,key,value,seconds) =>{
   return await setListKeys(id,key,value,seconds);
 };
 
+/**
+ * 获取hash Value
+ * @param id
+ * @param key
+ * @returns {Promise<unknown>}
+ */
 window.getHashKey = async(id,key) =>{
   return await getHashKeys(id,key);
 };
 
-
+/**
+ * 修改key
+ * @param id
+ * @param oldKey
+ * @param newKey
+ * @returns {Promise<unknown>}
+ */
 window.updateKey = async(id,oldKey,newKey) =>{
   return await updateKeys(id,oldKey,newKey);
 };
 
+/**
+ * 增加或者修改list值
+ * @param id
+ * @param key
+ * @param index
+ * @param value
+ * @returns {Promise<unknown>}
+ */
 window.updateListValue = async(id,key,index,value) =>{
   return await updateListValues(id,key,index,value);
 };
 
+/**
+ * 增加或者修改hash值
+ * @param id
+ * @param key
+ * @param field
+ * @param value
+ * @returns {Promise<unknown>}
+ */
 window.updateHashValue = async(id,key,field,value) =>{
   return await updateHashValues(id,key,field,value);
+};
+
+
+/**
+ * 切换数据库
+ * @param id
+ * @param db
+ * @returns {Promise<unknown>}
+ */
+window.selectDb = async(id,db) =>{
+  return await selectDbs(id,db);
+};
+
+
+/**
+ * 获取当前db库编号
+ * @param id
+ * @param db
+ * @returns {Promise<*>}
+ */
+window.getDb = async(id) =>{
+  return await getDbs(id);
 };
 
