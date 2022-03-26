@@ -80,6 +80,24 @@ let getHashKeys = async(id,key)=>{
   return doc;
 };
 
+
+let smembers = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.smembers(key, function (err, res) {
+        console.log(typeof res)
+        return resolve(res);
+      });
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+
 let getkeyType = async(id,key)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
@@ -157,6 +175,23 @@ let setListKeys = async(id,key,value,seconds)=>{
   return doc;
 };
 
+let sadd = async(id,key,value,seconds)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.sadd(key, value);
+      if(seconds !== -1){
+        client.expire(key, seconds);
+      }
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
 
 let updateListValues = async(id,key,index,value)=>{
   const doc = await new Promise((resolve) => {
@@ -188,6 +223,48 @@ let updateKeys = async(id,oldKey,newKey)=>{
   const doc = await new Promise((resolve) => {
     getClient(id).then((client) => {
       client.rename(oldKey,newKey);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+let hdel = async(id,key,field)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.hdel(key, field);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+let srem = async(id,key,value)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.srem(key, value);
+      return resolve(true);
+    }).catch((error) => {
+      console.log(error)
+    });
+  });
+  console.log(doc)
+  return doc;
+};
+
+
+let del = async(id,key)=>{
+  const doc = await new Promise((resolve) => {
+    getClient(id).then((client) => {
+      client.del(key);
       return resolve(true);
     }).catch((error) => {
       console.log(error)
@@ -472,5 +549,48 @@ window.selectDb = async(id,db) =>{
  */
 window.getDb = async(id) =>{
   return await getDbs(id);
+};
+
+/**
+ * 删除hash元素
+ * @param id
+ * @param key
+ * @param field
+ * @returns {Promise<*>}
+ */
+window.hashDelete = async(id,key,field) =>{
+  return await hdel(id,key,field);
+};
+
+/**
+ * set数据结构 delete
+ * @param id
+ * @param key
+ * @param value
+ * @returns {Promise<*>}
+ */
+window.setDelete = async(id,key,value) =>{
+  return await srem(id,key,value);
+};
+
+/**
+ * set数据结构 inset
+ * @param id
+ * @param key
+ * @param value
+ * @returns {Promise<*>}
+ */
+window.setAdd = async(id,key,value,seconds) =>{
+  return await sadd(id,key,value,seconds);
+};
+
+/**
+ * set数据结构 get
+ * @param id
+ * @param key
+ * @returns {Promise<*>}
+ */
+window.getSetValue = async(id,key) =>{
+  return await smembers(id,key);
 };
 

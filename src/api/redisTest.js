@@ -56,15 +56,25 @@ client.on("warning", function(err){
   }
 })
 
-client.select("5",function (err) {
-  if(err){
+// client.del("sd")
 
-    console.log("redis select db error : " + err);
-  }else{
-    console.log("redis now db is 15");
-    console.log(client.selected_db);
-  }
-});
+// console.info([{"index":"wwwwww","value":"ddddddddd"}].filter(ss => ss.index !== 'wwwwww').map(ss => ss.value).length)
+//
+// console.info([{"index":"wwwwww","value":"ddddddddd"}].length)
+
+
+// client.select("5",function (err) {
+//   if(err){
+//
+//     console.log("redis select db error : " + err);
+//   }else{
+//     console.log("redis now db is 15");
+//     console.log(client.selected_db);
+//   }
+// });
+
+
+
 //
 // client.keys('*', function (err, res) {
 //   console.log(res)
@@ -80,22 +90,27 @@ client.select("5",function (err) {
 
 
 // let list = []
-// client.hgetall('hash key', function (err, res) {
+
+// client.hgetall('byzhaolist', function (err, res) {
 //   console.log(res)
-//   console.log(555555555555)
-//   list = res
-//   // console.log(JSON.parse(res))
+// });
+
+
+
+
+// client.lrange('byzhaolist', 0 ,-1, function (err, res) {
+//   console.log(res)
+// });
 //
-//   console.log(444444444444)
-// });
-
-
-
-
-// client.lrange('lists', 0 ,-1, function (err, res) {
+//
+// client.ltrim('byzhaolist', 1 ,2, function (err, res) {
 //   console.log(res)
-//   console.log(444444444444)
 // });
+//
+// client.lrange('byzhaolist', 0 ,-1, function (err, res) {
+//   console.log(res)
+// });
+
 //
 // client.lset('lists', 1 ,'hhhhhhhhhhh')
 //
@@ -105,7 +120,7 @@ client.select("5",function (err) {
 // });
 
 
-
+// client.hdel("hash", "eeeeeee");
 
 // console.log(list)
 // client.set("string key1111", "string val", redis.print);
@@ -156,4 +171,22 @@ client.select("5",function (err) {
 // })
 
 
+/**
+ * Set操作
+ */
+client.sadd("set",["士大夫大幅度","sdsds",454541])
+client.type("set", function (err, res) {
+  console.log(res)
+});
 
+client.sadd("set","士大夫大幅度")
+
+client.smembers('set', function (err, res) {
+  console.log(res)
+});
+
+client.srem("set","sdsds")
+
+client.smembers('set', function (err, res) {
+  console.log(res)
+});

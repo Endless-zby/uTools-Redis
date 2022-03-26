@@ -173,14 +173,14 @@
             <el-button type="primary" icon="el-icon-edit" @click="dialogFormVisibleUpdateValue = true"></el-button>
             <el-button type="danger" icon="el-icon-delete" @click="deleteKey" style="float: right"></el-button>
           </div>
-          <div v-else-if="mainType === 'list' || mainType === 'hash'">
+          <div v-else-if="mainType === 'list' || mainType === 'hash' || mainType === 'set'">
             <el-table
               :data="tableData.filter(data => !search || data.value.toLowerCase().includes(search.toLowerCase()) || data.index.toLowerCase().includes(search.toLowerCase()))"
               border
               style="width: 100%">
               <el-table-column
                 prop="index"
-                :label="mainType === 'list' ? 'ID' : 'Key'">
+                :label="mainType === 'hash' ? 'Key' : 'ID'">
               </el-table-column>
               <el-table-column
                 prop="value"
@@ -194,7 +194,7 @@
                     placeholder="输入关键字搜索"/>
                 </template>
                 <template slot-scope="scope">
-                  <el-button
+                  <el-button v-if="mainType === 'list' || mainType === 'hash'"
                     size="mini"
                     @click="handleEdit(scope.$index, scope.row)">编辑
                   </el-button>
@@ -209,6 +209,8 @@
             </el-table>
             <br>
             <el-button v-if="mainType === 'list'" type="primary" icon="el-icon-plus" @click="addListKeyValueFunction"
+                       style="float: left"></el-button>
+            <el-button v-if="mainType === 'set'" type="primary" icon="el-icon-plus" @click="addSetKeyValueFunction"
                        style="float: left"></el-button>
             <el-button v-if="mainType === 'hash'" type="primary" icon="el-icon-plus" @click="addHashKeyValue = true"
                        style="float: left"></el-button>
@@ -245,6 +247,8 @@
             <el-select v-model="addKeyForm.type" placeholder="请选择数据类型">
               <el-option label="string" value="string"></el-option>
               <el-option label="list" value="list"></el-option>
+              <el-option label="hash" value="hash"></el-option>
+              <el-option label="set" value="set"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="键名" :label-width="formLabelWidth" :rules="[{ required: true, message: 'key不能为空'}]">
@@ -253,7 +257,7 @@
           <el-form-item label="过期" placeholder="秒" :label-width="formLabelWidth">
             <el-input v-model="addKeyForm.seconds" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item label="键值" :label-width="formLabelWidth">
+          <el-form-item v-if="addKeyForm.type === 'string'" label="键值" :label-width="formLabelWidth">
             <el-input v-model="addKeyForm.stringValue" type="textarea" autocomplete="off"></el-input>
           </el-form-item>
         </el-form>
@@ -322,7 +326,7 @@ export default {
       addHashKeyValue: false,
       showClientInfo: false,
       addKeyForm: {
-        type: '',
+        type: 'string',
         key: '',
         stringValue: '',
         seconds: -1,
@@ -429,7 +433,7 @@ export default {
         console.log('set了一个list');
         console.log(this.addKeyForm.stringValue);
         console.log('---------------');
-        setListKey(this.nowClient.id, this.addKeyForm.key, this.addKeyForm.stringValue, this.addKeyForm.seconds).then((data) => {
+        setListKey(this.nowClient.id, this.addKeyForm.key, 'value', this.addKeyForm.seconds).then((data) => {
           console.log('+++++++++++');
           console.log(data);
           this.$message.success('添加成功');
@@ -438,7 +442,28 @@ export default {
           console.log(errer);
           this.$message.success(errer);
         })
+      }else if ("hash" === this.addKeyForm.type) {
+        console.log('set了一个hash');
+        updateHashValue(this.nowClient.id, this.addKeyForm.key, 'field', 'hash Value').then((data) => {
+          this.$message.success('添加成功');
+          this.refreshKeysList()
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.error(errer);
+        })
       }
+      else if ("set" === this.addKeyForm.type) {
+        console.log('set了一个hash');
+        setAdd(this.nowClient.id, this.addKeyForm.key, 'setValue', this.addKeyForm.seconds).then((data) => {
+          this.$message.success('添加成功');
+          this.refreshKeysList()
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.error(errer);
+        })
+      }
+      // 初始化addKeyForm
+      this.addKeyForm = this.$options.data().addKeyForm
       this.refresh()
 
     },
@@ -595,6 +620,28 @@ export default {
         });
       });
     },
+
+    addSetKeyValueFunction: function () {
+      this.$prompt('添加新行', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValidator: true,
+      }).then(({value}) => {
+        setAdd(this.nowClient.id, this.key, value, -1).then((data) => {
+          this.$message.success('添加成功');
+        }).catch((errer) => {
+          console.log(errer);
+          this.$message.success(errer);
+        })
+        this.getValue(this.key)
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        });
+      });
+    },
+
     addHashKeyValueFunction: function () {
       updateHashValue(this.nowClient.id, this.key, this.hashField, this.hashValue).then((data) => {
         this.addHashKeyValue = false
@@ -608,6 +655,45 @@ export default {
     handleDelete: function (index, row) {
       console.log(index);
       console.log(row);
+
+      if (this.mainType === 'list') {
+        const newList = this.tableData.filter(ss => ss.index !== index).map(ss => ss.value)
+        // 删除key  再增加新key value
+        this.deleteKey()
+        if(newList.length !== 0){
+          setListKey(this.nowClient.id, this.key, newList, -1).then((data) => {
+            this.$message.success('删除成功');
+          }).catch((errer) => {
+            console.log(errer);
+            this.$message.success(errer);
+          })
+          this.getValue(this.key)
+        }
+      } else if (this.mainType === 'hash') {
+        const newList = this.tableData.filter(ss => ss.index !== row.index).map(ss => ss.value)
+        if(newList.length === 0){
+          this.deleteKey()
+        }else {
+          hashDelete(this.nowClient.id, this.key, row.index).then((data) => {
+            this.$message.success('删除成功');
+          }).catch(() => {
+            this.$message.error('删除失败');
+          })
+          this.getValue(this.key)
+        }
+      }else if(this.mainType === 'set'){
+        const newList = this.tableData.filter(ss => ss.index !== index).map(ss => ss.value)
+        if(newList.length === 0){
+          this.deleteKey()
+        }else {
+          setDelete(this.nowClient.id, this.key, row.value).then((data) => {
+            this.$message.success('删除成功');
+          }).catch(() => {
+            this.$message.error('删除失败');
+          })
+          this.getValue(this.key)
+        }
+      }
 
     },
     getValue: function (key) {
@@ -652,6 +738,17 @@ export default {
               list.push({"index": k, "value": v})
             }
             this.tableData = list;
+            console.log(this.tableData);
+          }).catch((errer) => {
+            console.log(errer);
+          })
+        }else if ("set" === type) {
+          this.mainType = type
+          getSetValue(this.nowClient.id, key).then((data) => {
+            console.log(data);
+            this.tableData = data.map((item, index) => {
+              return {'index': index, 'value': item}
+            });
             console.log(this.tableData);
           }).catch((errer) => {
             console.log(errer);
