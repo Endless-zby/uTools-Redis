@@ -710,7 +710,14 @@ export default {
           this.mainType = type
           getKey(this.nowClient.id, key).then((data) => {
             try {
-              this.textarea2 = JSON.parse(data) // 如果不是json字符串就会抛异常
+              let s = data.toString();
+              if(s.startsWith('{') && s.endsWith('}')){
+                console.log('判定为非json');
+                this.textarea2 = JSON.parse(data.toString()) // 如果不是json字符串就会抛异常
+              }else {
+                this.textarea2 = s
+              }
+              console.log('result： ' + this.textarea2);
             } catch (e) {
               this.textarea2 = data
             }
